@@ -38,3 +38,7 @@ ENV/
 
 # Demo script (local only)
 DEMO_SCRIPT.md
+
+# Temp/log files
+*.txt
+!requirements.txt
