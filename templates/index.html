@@ -11,8 +11,9 @@
             --bg-surface: #0c0f14;
             --bg-elevated: #12161d;
             --bg-hover: #1a1f29;
-            --border-subtle: rgba(255, 255, 255, 0.05);
-            --border-default: rgba(255, 255, 255, 0.08);
+            --border-subtle: rgba(255, 255, 255, 0.12);
+            --border-default: rgba(255, 255, 255, 0.18);
+            --border-glow: rgba(0, 240, 255, 0.25);
             --text-primary: #ffffff;
             --text-secondary: rgba(255, 255, 255, 0.65);
             --text-tertiary: rgba(255, 255, 255, 0.35);
@@ -224,12 +225,13 @@
 
         .hero-stat {
             background: var(--bg-surface);
-            border: 1px solid var(--border-subtle);
+            border: 1px solid var(--border-default);
             border-radius: 16px;
             padding: 24px;
             position: relative;
             overflow: hidden;
             transition: all 0.3s ease;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
         }
 
         .hero-stat::before {
@@ -288,10 +290,11 @@
         /* Cards */
         .card {
             background: var(--bg-surface);
-            border: 1px solid var(--border-subtle);
+            border: 1px solid var(--border-default);
             border-radius: 16px;
             overflow: hidden;
             margin-bottom: 24px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
         }
 
         .card-header {
@@ -555,12 +558,13 @@
 
         .market-card {
             background: var(--bg-surface);
-            border: 1px solid var(--border-subtle);
+            border: 1px solid var(--border-default);
             border-radius: 14px;
             padding: 20px;
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
         }
 
         .market-card::after {
@@ -603,7 +607,8 @@
             padding: 14px;
             background: var(--bg-elevated);
             border-radius: 10px;
-            border: 1px solid var(--border-subtle);
+            border: 1px solid var(--border-default);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         .odds-value {
@@ -633,7 +638,7 @@
         /* Logs */
         .logs-container {
             background: var(--bg-base);
-            border: 1px solid var(--border-subtle);
+            border: 1px solid var(--border-default);
             border-radius: 12px;
             padding: 16px;
             max-height: 250px;
@@ -641,6 +646,7 @@
             font-family: 'JetBrains Mono', monospace;
             font-size: 12px;
             line-height: 1.8;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
         }
 
         .log-line { color: var(--text-tertiary); }
@@ -716,13 +722,14 @@
         .section-badge {
             padding: 6px 14px;
             background: var(--gradient-glow);
-            border: 1px solid var(--border-default);
+            border: 1px solid rgba(0, 240, 255, 0.3);
             border-radius: 100px;
             font-size: 11px;
             font-weight: 600;
             color: var(--accent-cyan);
             text-transform: uppercase;
             letter-spacing: 1px;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
         }
 
         /* Agent Swarm Section */
@@ -730,8 +737,9 @@
             margin-top: 48px;
             padding: 32px;
             background: var(--bg-surface);
-            border: 1px solid var(--border-subtle);
+            border: 1px solid var(--border-default);
             border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
         }
 
         .agents-grid {
@@ -742,10 +750,11 @@
 
         .agent-card {
             background: var(--bg-elevated);
-            border: 1px solid var(--border-subtle);
+            border: 1px solid var(--border-default);
             border-radius: 16px;
             padding: 24px;
             transition: all 0.3s;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
         }
 
         .agent-card.active {
@@ -866,15 +875,17 @@
             margin-top: 48px;
             padding: 32px;
             background: var(--bg-surface);
-            border: 1px solid var(--border-subtle);
+            border: 1px solid var(--border-default);
             border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
         }
 
         .evaluation-panel {
             background: var(--bg-elevated);
-            border: 1px solid var(--border-subtle);
+            border: 1px solid var(--border-default);
             border-radius: 16px;
             padding: 24px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
         }
 
         .eval-description {
@@ -897,9 +908,16 @@
 
         .model-card {
             background: var(--bg-base);
-            border: 1px solid var(--border-subtle);
+            border: 1px solid var(--border-default);
             border-radius: 12px;
             padding: 20px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .model-card:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-2px);
         }
 
         .model-header {
@@ -980,10 +998,11 @@
 
         .consensus-result {
             background: var(--bg-base);
-            border: 1px solid var(--border-subtle);
+            border: 1px solid var(--border-default);
             border-radius: 12px;
             padding: 20px;
             text-align: center;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
         }
 
         .consensus-label {
@@ -1009,15 +1028,17 @@
             margin-top: 48px;
             padding: 32px;
             background: var(--bg-surface);
-            border: 1px solid var(--border-subtle);
+            border: 1px solid var(--border-default);
             border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
         }
 
         .roadmap-content {
             background: var(--bg-elevated);
-            border: 1px solid var(--border-subtle);
+            border: 1px solid var(--border-default);
             border-radius: 16px;
             padding: 24px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
         }
 
         .roadmap-intro {
@@ -1039,10 +1060,11 @@
 
         .roadmap-item {
             background: var(--bg-base);
-            border: 1px solid var(--border-subtle);
+            border: 1px solid var(--border-default);
             border-radius: 12px;
             padding: 20px;
             transition: all 0.3s;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
         }
 
         .roadmap-item:hover {
