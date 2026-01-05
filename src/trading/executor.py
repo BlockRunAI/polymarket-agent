@@ -5,7 +5,7 @@ Handles order placement on Polymarket using py-clob-client
 import os
 import json
 import logging
-from typing import Optional, Dict, Any, Tuple
+from typing import Optional, Dict, Any, Tuple, Union
 from decimal import Decimal
 from dotenv import load_dotenv
 
@@ -116,7 +116,7 @@ class TradeExecutor:
             logger.error(f"Failed to initialize CLOB client: {e}")
             return False
 
-    def get_orderbook(self, token_id: str) -> Optional[Dict]:
+    def get_orderbook(self, token_id: str) -> Optional[Any]:
         """Get order book for a token"""
         if not self._ensure_initialized():
             return None
@@ -136,14 +136,19 @@ class TradeExecutor:
         try:
             if side.upper() == "BUY":
                 # Best ask price (lowest sell)
-                asks = orderbook.get("asks", [])
+                asks = getattr(orderbook, 'asks', []) or []
                 if asks:
-                    return float(asks[0].get("price", 0))
+                    # Handle both dict and object formats
+                    first_ask = asks[0]
+                    price = getattr(first_ask, 'price', None) or first_ask.get('price', 0) if isinstance(first_ask, dict) else first_ask.price
+                    return float(price)
             else:
                 # Best bid price (highest buy)
-                bids = orderbook.get("bids", [])
+                bids = getattr(orderbook, 'bids', []) or []
                 if bids:
-                    return float(bids[0].get("price", 0))
+                    first_bid = bids[0]
+                    price = getattr(first_bid, 'price', None) or first_bid.get('price', 0) if isinstance(first_bid, dict) else first_bid.price
+                    return float(price)
         except Exception as e:
             logger.error(f"Error parsing orderbook: {e}")
 
