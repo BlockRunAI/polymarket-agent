@@ -34,4 +34,7 @@ ENV/
 *.swo
 
 # macOS
-.DS_Store 
+.DS_Store
+
+# Demo script (local only)
+DEMO_SCRIPT.md
