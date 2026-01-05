@@ -134,6 +134,7 @@ class PolymarketClient:
     def _parse_token_ids(self, market: Dict[str, Any]) -> List[str]:
         """Extract token IDs from market data"""
         import logging
+        import json
         logger = logging.getLogger(__name__)
 
         # Try tokens array first
@@ -144,12 +145,25 @@ class PolymarketClient:
                 logger.debug(f"Found token_ids from tokens: {ids[:2]}")
                 return ids
 
-        # Try clobTokenIds (string format)
+        # Try clobTokenIds - can be JSON string or regular string
         clob_ids = market.get("clobTokenIds", "")
         if clob_ids:
-            ids = [t.strip() for t in clob_ids.split(",") if t.strip()]
+            # Try parsing as JSON first (it might be a JSON array string)
+            try:
+                if clob_ids.startswith("["):
+                    parsed = json.loads(clob_ids)
+                    if isinstance(parsed, list):
+                        ids = [str(t).strip() for t in parsed if t]
+                        if ids:
+                            logger.debug(f"Found token_ids from clobTokenIds JSON: {ids[:2]}")
+                            return ids
+            except json.JSONDecodeError:
+                pass
+
+            # Fallback: split by comma
+            ids = [t.strip().strip('"').strip("'") for t in clob_ids.split(",") if t.strip()]
             if ids:
-                logger.debug(f"Found token_ids from clobTokenIds: {ids[:2]}")
+                logger.debug(f"Found token_ids from clobTokenIds split: {ids[:2]}")
                 return ids
 
         # Try outcomes with token_id

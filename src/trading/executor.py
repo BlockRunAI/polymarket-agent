@@ -49,13 +49,14 @@ class TradeExecutor:
             from py_clob_client.client import ClobClient
             from py_clob_client.clob_types import ApiCreds
 
-            # Check for stored API credentials
+            # Check for stored API credentials (REQUIRED for trading)
             api_key = os.getenv("POLYMARKET_API_KEY")
             api_secret = os.getenv("POLYMARKET_API_SECRET")
             passphrase = os.getenv("POLYMARKET_PASSPHRASE")
 
             if api_key and api_secret and passphrase:
                 # Use existing credentials
+                logger.info("Using stored Polymarket API credentials")
                 self._api_creds = ApiCreds(
                     api_key=api_key,
                     api_secret=api_secret,
@@ -67,22 +68,41 @@ class TradeExecutor:
                     key=self.private_key,
                     creds=self._api_creds
                 )
+                self._initialized = True
+                return True
             else:
-                # Create new client and derive credentials
+                # Try to derive credentials (requires wallet registered on Polymarket)
+                logger.info("No stored credentials, attempting to derive API key...")
                 self.client = ClobClient(
                     host=CLOB_HOST,
                     chain_id=CHAIN_ID,
                     key=self.private_key
                 )
-                # Derive API credentials from wallet signature
-                self._api_creds = self.client.derive_api_key()
-                logger.info(f"Derived API credentials. Save these to .env:")
-                logger.info(f"POLYMARKET_API_KEY={self._api_creds.api_key}")
-                logger.info(f"POLYMARKET_API_SECRET={self._api_creds.api_secret}")
-                logger.info(f"POLYMARKET_PASSPHRASE={self._api_creds.api_passphrase}")
+                try:
+                    self._api_creds = self.client.derive_api_key()
+                    logger.info(f"Successfully derived API credentials!")
+                    logger.info(f"Add these to .env to avoid re-deriving:")
+                    logger.info(f"POLYMARKET_API_KEY={self._api_creds.api_key}")
+                    logger.info(f"POLYMARKET_API_SECRET={self._api_creds.api_secret}")
+                    logger.info(f"POLYMARKET_PASSPHRASE={self._api_creds.api_passphrase}")
 
-            self._initialized = True
-            return True
+                    # Re-create client with credentials
+                    self.client = ClobClient(
+                        host=CLOB_HOST,
+                        chain_id=CHAIN_ID,
+                        key=self.private_key,
+                        creds=self._api_creds
+                    )
+                    self._initialized = True
+                    return True
+                except Exception as derive_err:
+                    logger.error(f"Could not derive API key: {derive_err}")
+                    logger.error("SOLUTION: Your wallet must be registered with Polymarket first!")
+                    logger.error("1. Go to https://polymarket.com")
+                    logger.error("2. Connect with the same wallet used for POLYGON_WALLET_PRIVATE_KEY")
+                    logger.error("3. Sign in and accept terms of service")
+                    logger.error("4. Then trading will work, OR add API credentials to .env")
+                    return False
 
         except Exception as e:
             logger.error(f"Failed to initialize CLOB client: {e}")
