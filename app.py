@@ -85,13 +85,16 @@ analyzer = get_analyzer()
 wallet = get_wallet()
 executor = get_executor()
 
+def _truncate(addr):
+    return f"{addr[:6]}...{addr[-4:]}" if addr and len(addr) >= 12 else addr
+
 if analyzer:
-    logger.info(f"BlockRun client initialized. Wallet: {analyzer.wallet_address}")
+    logger.info(f"BlockRun client initialized. Wallet: {_truncate(analyzer.wallet_address)}")
 else:
     logger.warning("BlockRun not configured. Set BASE_CHAIN_WALLET_KEY in .env")
 
 if wallet:
-    logger.info(f"Trading wallet initialized: {wallet.address}")
+    logger.info(f"Trading wallet initialized: {_truncate(wallet.address)}")
 else:
     logger.warning("Trading wallet not configured. Set POLYGON_WALLET_PRIVATE_KEY in .env")
 
@@ -350,10 +353,16 @@ def get_dashboard_data():
     }
 
 
+def truncate_address(address: str) -> str:
+    """Truncate wallet address for display (0x1234...5678)"""
+    if not address or len(address) < 12:
+        return address
+    return f"{address[:6]}...{address[-4:]}"
+
+
 @app.route('/')
-@requires_auth
 def home():
-    """Dashboard home page"""
+    """Dashboard home page - public for demo"""
     data = get_dashboard_data()
     return render_template('index.html', **data)
 
@@ -378,10 +387,10 @@ def api_status():
     }
 
     if analyzer:
-        status["ai_wallet"] = analyzer.wallet_address
+        status["ai_wallet"] = truncate_address(analyzer.wallet_address)
 
     if wallet:
-        status["trading_wallet"] = wallet.address
+        status["trading_wallet"] = truncate_address(wallet.address)
         status["usdc_balance"] = wallet.get_usdc_balance()
         status["approved"] = wallet.check_approval()
 
