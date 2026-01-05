@@ -3,290 +3,447 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PollyPicks - Setup Guide</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Setup Guide | Polymarket AI Agent by BlockRun.AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #5a67d8;
-            --secondary-color: #4c51bf;
-            --accent-color: #f05252;
-            --background-color: #f7fafc;
-            --card-color: #ffffff;
-            --text-color: #1a202c;
-            --text-muted: #718096;
-            --border-color: #e2e8f0;
-            --success-color: #48bb78;
-            --warning-color: #f6ad55;
-            --error-color: #e53e3e;
+            --bg-base: #05070a;
+            --bg-surface: #0c0f14;
+            --bg-elevated: #12161d;
+            --bg-hover: #1a1f29;
+            --border-subtle: rgba(255, 255, 255, 0.05);
+            --border-default: rgba(255, 255, 255, 0.08);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.65);
+            --text-tertiary: rgba(255, 255, 255, 0.35);
+            --accent-cyan: #00f0ff;
+            --accent-green: #00ff88;
+            --accent-purple: #a855f7;
+            --accent-orange: #ff8800;
+            --accent-red: #ff3366;
+            --gradient-main: linear-gradient(135deg, #00f0ff 0%, #00ff88 50%, #a855f7 100%);
+            --gradient-glow: linear-gradient(135deg, rgba(0, 240, 255, 0.15) 0%, rgba(0, 255, 136, 0.1) 50%, rgba(168, 85, 247, 0.15) 100%);
         }
-        
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--background-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 0;
-            line-height: 1.5;
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-base);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
         }
-        
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 2rem;
+
+        /* Background Effects */
+        .bg-grid {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image:
+                linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
         }
-        
+
+        .bg-glow {
+            position: fixed;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle at 30% 20%, rgba(0, 240, 255, 0.08) 0%, transparent 40%),
+                        radial-gradient(circle at 70% 60%, rgba(168, 85, 247, 0.06) 0%, transparent 40%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Header */
         header {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 1.5rem 0;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(5, 7, 10, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 0 24px;
+            height: 70px;
+            display: flex;
+            align-items: center;
         }
-        
-        .header-content {
-            max-width: 800px;
+
+        .header-inner {
+            max-width: 900px;
+            width: 100%;
             margin: 0 auto;
-            padding: 0 2rem;
             display: flex;
+            align-items: center;
             justify-content: space-between;
-            align-items: center;
         }
-        
-        h1 {
-            margin: 0;
-            font-size: 1.75rem;
-            font-weight: 600;
-        }
-        
-        h2 {
-            font-size: 1.5rem;
-            margin-top: 2rem;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        h3 {
-            font-size: 1.25rem;
-            margin-top: 1.5rem;
-            margin-bottom: 0.75rem;
-        }
-        
-        .card {
-            background-color: var(--card-color);
-            border-radius: 10px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            border: 1px solid var(--border-color);
-        }
-        
-        .alert {
-            padding: 1rem;
-            border-radius: 6px;
-            margin-bottom: 1.5rem;
-            font-weight: 500;
+
+        .logo {
             display: flex;
             align-items: center;
+            gap: 14px;
+            text-decoration: none;
         }
-        
-        .alert-icon {
-            margin-right: 0.75rem;
-            font-size: 1.5rem;
-        }
-        
-        .alert-warning {
-            background-color: rgba(246, 173, 85, 0.1);
-            color: var(--warning-color);
-            border: 1px solid var(--warning-color);
-        }
-        
-        .alert-error {
-            background-color: rgba(229, 62, 62, 0.1);
-            color: var(--error-color);
-            border: 1px solid var(--error-color);
-        }
-        
-        .alert-success {
-            background-color: rgba(72, 187, 120, 0.1);
-            color: var(--success-color);
-            border: 1px solid var(--success-color);
-        }
-        
-        .code-block {
-            background-color: #2d3748;
-            color: white;
-            padding: 1rem;
-            border-radius: 6px;
-            font-family: monospace;
-            overflow-x: auto;
-            margin: 1rem 0;
-        }
-        
-        .step {
-            margin-bottom: 2rem;
-        }
-        
-        .step-number {
-            display: inline-flex;
+
+        .logo-mark {
+            width: 42px;
+            height: 42px;
+            background: var(--gradient-main);
+            border-radius: 12px;
+            display: flex;
             align-items: center;
             justify-content: center;
-            width: 2rem;
-            height: 2rem;
-            background-color: var(--primary-color);
-            color: white;
-            border-radius: 9999px;
-            font-weight: 600;
-            margin-right: 0.75rem;
+            font-weight: 800;
+            font-size: 14px;
+            color: #000;
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.4);
         }
-        
-        .step-title {
-            font-size: 1.25rem;
-            font-weight: 600;
+
+        .logo-text { display: flex; flex-direction: column; }
+
+        .logo-title {
+            font-size: 18px;
+            font-weight: 700;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-subtitle {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--accent-cyan);
+            background: var(--bg-elevated);
+        }
+
+        /* Main Content */
+        main {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 48px 24px;
+        }
+
+        .page-title {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 48px;
+        }
+
+        /* Alert */
+        .alert {
+            padding: 20px 24px;
+            border-radius: 16px;
+            margin-bottom: 32px;
             display: flex;
-            align-items: center;
-            margin-bottom: 1rem;
+            align-items: flex-start;
+            gap: 16px;
         }
-        
-        ul {
-            padding-left: 1.5rem;
+
+        .alert-icon {
+            font-size: 24px;
+            flex-shrink: 0;
         }
-        
-        li {
-            margin-bottom: 0.5rem;
+
+        .alert-success {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            color: var(--accent-green);
         }
-        
-        a {
-            color: var(--primary-color);
+
+        .alert-error {
+            background: rgba(255, 51, 102, 0.1);
+            border: 1px solid rgba(255, 51, 102, 0.3);
+            color: var(--accent-red);
+        }
+
+        .alert-warning {
+            background: rgba(255, 136, 0, 0.1);
+            border: 1px solid rgba(255, 136, 0, 0.3);
+            color: var(--accent-orange);
+        }
+
+        .alert p { margin: 0; }
+        .alert p + p { margin-top: 8px; }
+
+        /* Card */
+        .card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        .card h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 24px;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .card p {
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .card ul {
+            color: var(--text-secondary);
+            padding-left: 20px;
+            margin-bottom: 16px;
+        }
+
+        .card li {
+            margin-bottom: 8px;
+        }
+
+        .card a {
+            color: var(--accent-cyan);
             text-decoration: none;
             font-weight: 500;
         }
-        
-        a:hover {
+
+        .card a:hover {
             text-decoration: underline;
         }
-        
+
+        /* Code Block */
+        .code-block {
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.8;
+            color: var(--accent-cyan);
+            overflow-x: auto;
+            margin: 16px 0;
+            white-space: pre-wrap;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-elevated);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: var(--accent-cyan);
+        }
+
+        /* Steps */
+        .step {
+            margin-bottom: 32px;
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .step-number {
+            width: 36px;
+            height: 36px;
+            background: var(--gradient-main);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+            color: #000;
+            flex-shrink: 0;
+        }
+
+        .step-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Footer */
         footer {
-            margin-top: 3rem;
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--border-subtle);
+            padding: 32px 24px;
             text-align: center;
-            padding: 1.5rem;
-            color: var(--text-muted);
-            font-size: 0.875rem;
-            border-top: 1px solid var(--border-color);
+            color: var(--text-tertiary);
+            font-size: 13px;
+        }
+
+        footer a {
+            color: var(--accent-cyan);
+            text-decoration: none;
         }
     </style>
 </head>
 <body>
+    <div class="bg-grid"></div>
+    <div class="bg-glow"></div>
+
     <header>
-        <div class="header-content">
-            <h1>PollyPicks: Setup Guide</h1>
+        <div class="header-inner">
+            <a href="/" class="logo">
+                <div class="logo-mark">AI</div>
+                <div class="logo-text">
+                    <div class="logo-title">Polymarket AI Agent</div>
+                    <div class="logo-subtitle">by BlockRun.AI</div>
+                </div>
+            </a>
+            <a href="/" class="back-link">← Back to Dashboard</a>
         </div>
     </header>
-    
-    <div class="container">
+
+    <main>
+        <h1 class="page-title">Setup Guide</h1>
+        <p class="page-subtitle">Get your AI trading agent up and running in minutes.</p>
+
         {% if missing_vars %}
         <div class="alert alert-error">
             <div class="alert-icon">⚠️</div>
             <div>
-                <p>Missing required environment variables: {{ missing_vars|join(', ') }}</p>
-                <p>Please follow the setup guide below to configure these variables.</p>
+                <p><strong>Missing required environment variables:</strong></p>
+                <p>{{ missing_vars|join(', ') }}</p>
             </div>
         </div>
         {% else %}
         <div class="alert alert-success">
             <div class="alert-icon">✅</div>
             <div>
-                <p>All required environment variables are set. Your setup is complete!</p>
+                <p><strong>All set!</strong> Your environment is configured correctly.</p>
             </div>
         </div>
         {% endif %}
-        
+
         <div class="card">
-            <h2>Setting Up PollyPicks</h2>
-            <p>Welcome to PollyPicks, an AI-powered trading system for Polymarket. Follow the steps below to get started.</p>
-            
+            <h2>Getting Started</h2>
+            <p>Welcome to Polymarket AI Agent — an autonomous trading system that uses multi-model AI consensus to identify and execute trades on Polymarket.</p>
+
             <div class="step">
-                <div class="step-title">
-                    <span class="step-number">1</span>
-                    Configure Environment Variables
+                <div class="step-header">
+                    <div class="step-number">1</div>
+                    <div class="step-title">Configure Environment Variables</div>
                 </div>
-                <p>Create a <code>.env</code> file in the root directory by copying the <code>.env.example</code> file:</p>
-                <div class="code-block">cp .env.example .env</div>
-                <p>Then edit the <code>.env</code> file with your API keys and configuration:</p>
-                <div class="code-block">
-# OpenAI API key (required for AI functionality)
-OPENAI_API_KEY=your_openai_api_key_here
+                <p>Create a <code>.env</code> file in the root directory with the following:</p>
+                <div class="code-block"># BlockRun AI Configuration (Required for AI analysis)
+# Your Base chain wallet private key - used for x402 micropayments
+BLOCKRUN_WALLET_KEY=your_base_chain_private_key_here
+
+# Dashboard Login
+ADMIN_USER=admin
+ADMIN_PASS=your_secure_password_here
 
 # Flask app settings
 FLASK_SECRET_KEY=your_flask_secret_key_here
 
-# SerpAPI key (required for market data)
-SERPAPI_API_KEY=your_serpapi_api_key_here
+# Polymarket Trading (Required for placing bets)
+# Polygon wallet private key for trading
+POLYGON_WALLET_PRIVATE_KEY=your_polygon_private_key_here
 
-# Polymarket API credentials
-POLYMARKET_API_KEY=your_polymarket_api_key_here
-
-# Wallet information (required for transactions)
-POLYGON_WALLET_PRIVATE_KEY=your_private_key_here
-POLYMARKET_WALLET_ADDRESS=your_wallet_address_here
-
-# Trading settings
-INITIAL_BANKROLL=1000
+# Trading settings (Kelly Criterion)
+INITIAL_BANKROLL=100
 MAX_BET_PERCENTAGE=0.05
-MIN_EDGE_PERCENTAGE=0.15
+MIN_EDGE_PERCENTAGE=0.15</div>
+            </div>
+
+            <div class="step">
+                <div class="step-header">
+                    <div class="step-number">2</div>
+                    <div class="step-title">Setup BlockRun AI (Pay-per-use AI)</div>
+                </div>
+
+                <h3>BlockRun Wallet Setup</h3>
+                <p>BlockRun uses x402 micropayments — no API keys needed, just a wallet with USDC on Base chain.</p>
+                <ul>
+                    <li>Create a wallet on <strong>Base chain</strong> (e.g., using MetaMask)</li>
+                    <li>Export your private key for the <code>BLOCKRUN_WALLET_KEY</code></li>
+                    <li>Fund it with USDC on Base (only ~$0.001 per AI request)</li>
+                    <li>Visit <a href="https://blockrun.ai" target="_blank">blockrun.ai</a> for more info</li>
+                </ul>
+
+                <h3>Polymarket Trading Wallet</h3>
+                <p>For trading on Polymarket, you need a separate wallet on <strong>Polygon chain</strong>:</p>
+                <ul>
+                    <li>Create or use an existing Polygon wallet</li>
+                    <li>Export your private key for <code>POLYGON_WALLET_PRIVATE_KEY</code></li>
+                    <li>Fund it with <strong>USDC on Polygon</strong> for trading</li>
+                    <li>The agent will use this wallet to place bets</li>
+                </ul>
+
+                <div class="alert alert-warning" style="margin-top: 16px;">
+                    <div class="alert-icon">💡</div>
+                    <div>
+                        <p><strong>Pro Tip:</strong> You can use the same private key for both wallets — the same key works on Base (for AI) and Polygon (for trading). Different chains, same address.</p>
+                    </div>
                 </div>
             </div>
-            
+
             <div class="step">
-                <div class="step-title">
-                    <span class="step-number">2</span>
-                    Obtain Required API Keys
-                </div>
-                <h3>OpenAI API Key</h3>
-                <ul>
-                    <li>Visit <a href="https://platform.openai.com/api-keys" target="_blank">https://platform.openai.com/api-keys</a></li>
-                    <li>Sign up or log in to your OpenAI account</li>
-                    <li>Create a new API key and copy it to your <code>.env</code> file</li>
-                </ul>
-                
-                <h3>SerpAPI Key</h3>
-                <ul>
-                    <li>Visit <a href="https://serpapi.com/" target="_blank">https://serpapi.com/</a></li>
-                    <li>Sign up for an account and obtain your API key</li>
-                    <li>Copy the API key to your <code>.env</code> file</li>
-                </ul>
-                
-                <h3>Polymarket Wallet Setup</h3>
-                <ul>
-                    <li>Create a Polygon network wallet using MetaMask or another wallet provider</li>
-                    <li>Export your private key (keep this secure!)</li>
-                    <li>Add your wallet address and private key to the <code>.env</code> file</li>
-                    <li>Fund your wallet with MATIC (for gas fees) and USDC (for trading)</li>
-                </ul>
-            </div>
-            
-            <div class="step">
-                <div class="step-title">
-                    <span class="step-number">3</span>
-                    Run the Application
+                <div class="step-header">
+                    <div class="step-number">3</div>
+                    <div class="step-title">Run the Application</div>
                 </div>
                 <p>Start the Flask application:</p>
                 <div class="code-block">python app.py</div>
-                <p>Visit <a href="http://127.0.0.1:5000" target="_blank">http://127.0.0.1:5000</a> in your browser to access the application.</p>
+                <p>Visit <a href="http://127.0.0.1:5000" target="_blank">http://127.0.0.1:5000</a> in your browser to access the dashboard.</p>
             </div>
         </div>
-        
+
         <div class="card">
             <h2>Additional Resources</h2>
             <ul>
+                <li><a href="https://blockrun.ai" target="_blank">BlockRun AI</a> — Pay-per-use AI with x402 micropayments</li>
                 <li><a href="https://docs.polymarket.com/" target="_blank">Polymarket Documentation</a></li>
-                <li><a href="https://platform.openai.com/docs/introduction" target="_blank">OpenAI API Documentation</a></li>
                 <li><a href="https://web3py.readthedocs.io/" target="_blank">Web3.py Documentation</a></li>
+                <li><a href="https://github.com/blockrunai/polymarket-agent" target="_blank">GitHub Repository</a></li>
             </ul>
         </div>
-    </div>
-    
+    </main>
+
     <footer>
-        <p>&copy; {{ current_year if current_year else "2024" }} PollyPicks. All rights reserved.</p>
+        <p>&copy; {{ current_year if current_year else "2024" }} Polymarket AI Agent by <a href="https://blockrun.ai">BlockRun.AI</a></p>
     </footer>
 </body>
-</html> 
+</html>

@@ -1,149 +1,392 @@
-# PolyTrader: AI-Powered Automated Trading System for Polymarket
+# Polymarket AI Agent by BlockRunAI
 
-An autonomous AI trading agent for Polymarket that identifies market inefficiencies, calculates optimal bet sizes, and executes trades automatically. This system leverages ChatGPT's predictive capabilities against existing market odds to find profitable edges.
+<div align="center">
 
-## 🚀 Getting Started
+![Polymarket AI Agent](https://img.shields.io/badge/Polymarket-AI%20Agent-00f0ff?style=for-the-badge&logo=ethereum&logoColor=white)
+![x402 Protocol](https://img.shields.io/badge/x402-Protocol-00ff88?style=for-the-badge)
+![BlockRun](https://img.shields.io/badge/BlockRun-AI-a855f7?style=for-the-badge)
 
-### Prerequisites
+**An autonomous AI-powered prediction market trading agent**
 
-- Python 3.8+ installed
-- A Polygon network wallet with MATIC (for gas) and USDC (for trading)
-- API keys for OpenAI and SerpAPI
-- Basic understanding of prediction markets and crypto wallets
+*Built for the [x402 Hackathon](https://x402.org) by [BlockRunAI](https://blockrun.ai)*
 
-### Installation
+[Live Demo](https://polymarket-agent-516729397241.europe-west1.run.app) | [Documentation](#quick-start) | [BlockRun](https://blockrun.ai)
 
-1. Clone this repository
-```bash
-git clone https://github.com/yourusername/PolyTrader.git
-cd PolyTrader
-```
-
-2. Create a virtual environment
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. Install dependencies
-```bash
-pip install -r requirements.txt
-```
-
-4. Set up environment variables
-```bash
-cp .env.example .env
-# Edit .env with your API keys and configuration
-```
-
-5. Run the application
-```bash
-python app.py
-```
-
-6. Visit http://127.0.0.1:5000 in your browser
-
-## 📋 Features
-
-* **Market Analysis:** Continuously scans Polymarket for opportunities
-* **AI-Powered Predictions:** Uses ChatGPT to analyze various events
-* **Edge Detection:** Compares AI predictions with market consensus to find inefficiencies
-* **Intelligent Bet Sizing:** Implements Kelly Criterion for optimal bankroll management
-* **Automated Execution:** Places trades via Polymarket Agents SDK
-* **Risk Management:** Includes safety features to protect your bankroll
-
-## 🏗️ Architecture
-
-The system consists of three core modules:
-
-1. **Analysis Module**  
-   * Uses ChatGPT to analyze upcoming events  
-   * Compares predictions with current Polymarket odds  
-   * Identifies opportunities with significant edge
-
-2. **Decision Module**  
-   * Evaluates opportunities based on edge percentage  
-   * Calculates optimal bet size using Kelly Criterion  
-   * Manages risk to preserve bankroll
-
-3. **Execution Module**  
-   * Connects to Polymarket using their official Agents SDK  
-   * Places trades automatically with verification  
-   * Implements safety measures and error handling
-
-## ⚙️ Configuration
-
-Edit your `.env` file with the following variables:
-
-```
-# OpenAI API key (required for AI functionality)
-OPENAI_API_KEY=your_openai_api_key_here
-
-# Flask app settings
-FLASK_SECRET_KEY=your_flask_secret_key_here
-
-# SerpAPI key (required for market data)
-SERPAPI_API_KEY=your_serpapi_api_key_here
-
-# Polymarket API credentials
-POLYMARKET_API_KEY=your_polymarket_api_key_here
-
-# Wallet information (required for transactions)
-POLYGON_WALLET_PRIVATE_KEY=your_private_key_here
-POLYMARKET_WALLET_ADDRESS=your_wallet_address_here
-
-# Trading settings
-INITIAL_BANKROLL=1000
-MAX_BET_PERCENTAGE=0.05
-MIN_EDGE_PERCENTAGE=0.15
-```
-
-> ⚠️ **IMPORTANT**: Never commit your `.env` file or hardcode API keys in the source code. The `.env` file is included in `.gitignore` to prevent accidental exposure of your credentials.
-
-## 🚀 Usage
-
-Start the web interface:
-```bash
-python app.py
-```
-
-Run in simulation mode (no real trades):
-```bash
-python app.py --simulation
-```
-
-Analyze specific markets:
-```bash
-python polymarket_ai_search.py --query "NBA games tonight"
-```
-
-## ⚠️ Risk Warning
-
-Trading involves substantial risk and is not suitable for all investors. Past performance is not indicative of future results. Start with small amounts to test the system before scaling up. Implement proper risk management.
-
-## 🔍 Main Files
-
-* `app.py` - Main entry point for the Flask application
-* `polymarket_ai_search.py` - Search and analysis of Polymarket events
-* `place_polymarket_bet.py` - Automated bet execution
-* `fetch_current_markets.py` - Real-time market data retrieval
-
-## 📝 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 👨‍💻 Author
-
-Siraj Raval
-
-## 🙏 Acknowledgements
-
-* OpenAI for ChatGPT API
-* Polymarket team for the Agents SDK
-* All contributors and testers
+</div>
 
 ---
 
-⭐ Star this repo if you find it useful! Join our Discord community to discuss improvements and share results.
+## The Vision: Truly Autonomous AI Agents
 
-**Note:** This system is for educational purposes. Always do your own research before trading.
+**What if AI agents could be real economic actors?**
+
+Today's AI agents are puppets - they need developers to manage API keys, monitor credits, and handle payments. They can't make real economic decisions because they don't control real money.
+
+**This project changes that.**
+
+With the x402 protocol and BlockRun, this Polymarket agent is a **real economic entity**:
+
+- **Has its own wallet** - Not managed by a developer, owned by the agent
+- **Pays for its own AI** - No API keys, just USDC micropayments
+- **Makes trading decisions** - Analyzes markets, sizes positions, executes trades
+- **Manages its own budget** - Decides when expensive analysis is worth it
+
+> **This is what autonomous means.** An agent that earns money from prediction markets and spends money on AI services - all without human intervention.
+
+---
+
+## Why We Built This
+
+We believe the future of AI is **agentic** - AI systems that can act independently in the real world. But true autonomy requires economic autonomy.
+
+Traditional approaches fail because:
+- API keys = developer dependency
+- Prepaid credits = budget controlled by humans
+- Single provider = no choice, no optimization
+
+The x402 protocol solves this by making payments as simple as HTTP requests. BlockRun brings this to AI - 600+ models, pay-per-request, no keys needed.
+
+**This agent is our proof that autonomous AI economies are possible today.**
+
+---
+
+## Features
+
+| Feature | Description |
+|---------|-------------|
+| **Multi-Model AI Consensus** | GPT-4o, Claude, Gemini vote on predictions |
+| **Live Market Data** | Real-time data from Polymarket Gamma API |
+| **Kelly Criterion Sizing** | Mathematical optimal position sizing |
+| **Autonomous Payments** | Agent pays for its own AI via x402 |
+| **Web Dashboard** | Beautiful dark-themed monitoring UI |
+| **Trade Execution** | Direct order placement on Polygon |
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    POLYMARKET AI AGENT                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐         │
+│  │   Market    │    │     AI      │    │   Trading   │         │
+│  │    Data     │───▶│  Analysis   │───▶│  Execution  │         │
+│  │  (Gamma)    │    │ (BlockRun)  │    │  (Polygon)  │         │
+│  └─────────────┘    └─────────────┘    └─────────────┘         │
+│                            │                                    │
+│                            ▼                                    │
+│  ┌─────────────────────────────────────────────────────┐       │
+│  │              AGENT WALLET (Dual Chain)               │       │
+│  │                                                      │       │
+│  │   Base Chain          │        Polygon Chain         │       │
+│  │   (AI Payments)       │        (Trading)             │       │
+│  │   USDC ───────────────┼──────────▶ USDC             │       │
+│  │                       │                              │       │
+│  └─────────────────────────────────────────────────────┘       │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     x402 PROTOCOL LAYER                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Agent Request ──▶ 402 Payment Required ──▶ Sign USDC          │
+│                                               ──▶ AI Response   │
+│                                                                 │
+│  No API keys. No prepayment. Pay only for what you use.        │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Quick Start
+
+### 1. Clone and Setup
+
+```bash
+git clone https://github.com/BlockRunAI/polymarket-agent.git
+cd polymarket-agent
+
+# Create virtual environment
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### 2. Configure Environment
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env`:
+
+```bash
+# BlockRun AI Payments (Base chain)
+BLOCKRUN_WALLET_KEY=0x...your_private_key
+
+# Polymarket Trading (Polygon chain)
+POLYGON_WALLET_PRIVATE_KEY=0x...your_private_key
+
+# Dashboard Auth
+ADMIN_USER=admin
+ADMIN_PASS=your_secure_password
+
+# Trading Parameters
+INITIAL_BANKROLL=100
+MAX_BET_PERCENTAGE=0.05
+```
+
+> **Pro Tip:** You can use the same private key for both - same address works on Base and Polygon!
+
+### 3. Fund Your Wallet
+
+| Chain | Token | Purpose | Suggested |
+|-------|-------|---------|-----------|
+| Base | USDC | AI payments | $10-20 |
+| Polygon | USDC | Trading | $50-100 |
+
+### 4. Run
+
+```bash
+# Start web dashboard
+python app.py
+
+# Visit http://127.0.0.1:5000
+```
+
+Or use the CLI:
+
+```bash
+# Check status
+python main.py --status
+
+# Analyze markets
+python main.py --analyze
+
+# Run with live trading
+python main.py --live
+```
+
+---
+
+## How It Works
+
+### 1. Fetch Markets (Free)
+```python
+from src.market import fetch_active_markets
+markets = fetch_active_markets(limit=20)
+```
+
+### 2. AI Consensus Analysis (Pay-per-request)
+```python
+from src.analysis import get_analyzer
+analyzer = get_analyzer()
+
+# 3 models vote: GPT + Gemini + Claude
+result = analyzer.consensus_analysis(
+    question="Will Bitcoin reach $150K by June 2025?",
+    current_odds=0.35
+)
+# Returns: consensus, avg_probability, recommendation
+```
+
+### 3. Position Sizing (Kelly Criterion)
+```python
+# Optimal bet size based on edge and confidence
+bet_size = executor.calculate_position_size(
+    edge=0.15,      # 15% expected edge
+    confidence=7,   # AI confidence (1-10)
+    bankroll=100
+)
+```
+
+### 4. Execute Trade (Polygon)
+```python
+result = executor.execute_signal(
+    token_id="0x...",
+    action="BET YES",
+    edge=0.15,
+    confidence=7,
+    consensus="BULLISH"
+)
+```
+
+---
+
+## x402 Protocol Integration
+
+The agent uses [BlockRun](https://blockrun.ai) to access AI services via the x402 protocol:
+
+1. Agent makes request to BlockRun
+2. BlockRun returns `402 Payment Required`
+3. Agent signs USDC transfer (EIP-3009)
+4. BlockRun processes request and returns response
+5. USDC is transferred atomically
+
+**No API keys. No prepayment. True pay-per-use.**
+
+### Available Models
+
+| Model | Use Case | ~Cost/request |
+|-------|----------|---------------|
+| `openai/gpt-4o-mini` | Fast screening | $0.001 |
+| `google/gemini-2.5-flash` | Quick analysis | $0.001 |
+| `anthropic/claude-haiku-4.5` | Reasoning | $0.001 |
+| `anthropic/claude-sonnet-4` | Deep analysis | $0.003 |
+| `anthropic/claude-opus-4` | Complex tasks | $0.015 |
+
+---
+
+## Multi-Agent Architecture
+
+Our agent uses a **swarm architecture** with specialized agents for different tasks:
+
+| Agent | Status | Description |
+|-------|--------|-------------|
+| **Market Analysis Agent** | Active | 3-model consensus for predictions |
+| **News Agent** | Coming Soon | Real-time news sentiment analysis |
+| **Edge Detection Agent** | Coming Soon | Arbitrage & inefficiency detection |
+| **Whale Tracker Agent** | Coming Soon | Smart money movement tracking |
+
+The vision: agents that can **call other agents** via x402, creating an autonomous economy of specialized AI services.
+
+---
+
+## LLM Evaluation System
+
+We use a **3-model consensus** system for robust predictions:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│              3-MODEL CONSENSUS SYSTEM                    │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│   GPT-4o-mini     Gemini Flash     Claude Haiku        │
+│   (OpenAI)        (Google)         (Anthropic)         │
+│       │               │                │               │
+│       ▼               ▼                ▼               │
+│   ┌───────┐       ┌───────┐       ┌───────┐           │
+│   │ YES   │       │ YES   │       │  NO   │           │
+│   │ 65%   │       │ 70%   │       │ 45%   │           │
+│   └───────┘       └───────┘       └───────┘           │
+│       │               │                │               │
+│       └───────────────┼────────────────┘               │
+│                       ▼                                 │
+│              ┌─────────────────┐                       │
+│              │ CONSENSUS: YES  │                       │
+│              │ (2/3 agree)     │                       │
+│              └─────────────────┘                       │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Why multiple models?**
+- Reduces single-model bias
+- Different training data = different perspectives
+- Only trade when 2+ models agree (higher confidence)
+
+---
+
+## Roadmap
+
+| Status | Feature | Description |
+|--------|---------|-------------|
+| ✅ | Multi-Model Consensus | 3 LLMs vote on each prediction |
+| ✅ | Autonomous Payments | Agent pays for AI via x402 |
+| 🔄 | Agent Orchestration | Multiple specialized agents |
+| 🔮 | Agents Calling Agents | Agents pay other agents via x402 |
+| 🔮 | Agent Marketplace | Discover and hire specialized agents |
+| 🔮 | Autonomous Economy | Self-sustaining agent ecosystems |
+
+---
+
+## Project Structure
+
+```
+polymarket-agent/
+├── app.py                    # Flask web dashboard
+├── main.py                   # CLI entry point
+├── requirements.txt
+│
+├── src/
+│   ├── agent.py              # Main orchestrator
+│   ├── market/
+│   │   └── polymarket.py     # Gamma API client
+│   ├── analysis/
+│   │   └── ai_analyzer.py    # BlockRun AI integration
+│   └── trading/
+│       ├── wallet.py         # Wallet management
+│       └── executor.py       # Trade execution
+│
+└── templates/
+    ├── index.html            # Dashboard UI
+    └── setup.html            # Setup guide
+```
+
+---
+
+## Join the Movement
+
+We're building the infrastructure for autonomous AI economies. This agent is just the beginning.
+
+**Want to build with x402?**
+
+- Check out [awesome-blockrun](https://github.com/BlockRunAI/awesome-blockrun) for more examples
+- Join the x402 ecosystem of 1,100+ projects
+- Build agents that can pay for their own compute
+
+---
+
+## About BlockRun.AI
+
+[BlockRun](https://blockrun.ai) is the gateway to AI services using x402 micropayments. Access 600+ AI models with just a wallet - no API keys needed.
+
+**Connect with us:**
+
+| Channel | Link |
+|---------|------|
+| Website | [blockrun.ai](https://blockrun.ai) |
+| GitHub | [@BlockRunAI](https://github.com/BlockRunAI) |
+| X (Twitter) | [@BlockRunAI](https://x.com/BlockRunAI) |
+| Email | [vicky@blockrun.ai](mailto:vicky@blockrun.ai) |
+
+**Resources:**
+- [BlockRun Documentation](https://docs.blockrun.ai)
+- [Python SDK](https://github.com/BlockRunAI/blockrun-llm)
+- [TypeScript SDK](https://github.com/BlockRunAI/blockrun-llm-ts)
+- [awesome-blockrun](https://github.com/BlockRunAI/awesome-blockrun)
+
+---
+
+## Disclaimer
+
+- **Financial Risk**: Prediction market trading involves significant risk of loss
+- **Jurisdiction**: Check your local laws regarding prediction markets
+- **Experimental**: This is hackathon software - use at your own risk
+- **Not Financial Advice**: This project is for educational purposes only
+
+---
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+---
+
+<div align="center">
+
+**Built for the x402 Hackathon**
+
+*Proving that autonomous AI economies are possible today*
+
+[![BlockRun](https://img.shields.io/badge/Powered%20by-BlockRun.AI-a855f7?style=flat-square)](https://blockrun.ai)
+[![x402](https://img.shields.io/badge/Protocol-x402-00ff88?style=flat-square)](https://x402.org)
+
+</div>
