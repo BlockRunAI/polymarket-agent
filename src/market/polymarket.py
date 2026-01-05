@@ -133,15 +133,34 @@ class PolymarketClient:
 
     def _parse_token_ids(self, market: Dict[str, Any]) -> List[str]:
         """Extract token IDs from market data"""
+        import logging
+        logger = logging.getLogger(__name__)
+
+        # Try tokens array first
         tokens = market.get("tokens", [])
         if tokens:
-            return [t.get("token_id", "") for t in tokens]
+            ids = [t.get("token_id", "") for t in tokens]
+            if any(ids):
+                logger.debug(f"Found token_ids from tokens: {ids[:2]}")
+                return ids
 
-        # Fallback: try clob_token_ids
+        # Try clobTokenIds (string format)
         clob_ids = market.get("clobTokenIds", "")
         if clob_ids:
-            return clob_ids.split(",")
+            ids = [t.strip() for t in clob_ids.split(",") if t.strip()]
+            if ids:
+                logger.debug(f"Found token_ids from clobTokenIds: {ids[:2]}")
+                return ids
 
+        # Try outcomes with token_id
+        outcomes = market.get("outcomes", [])
+        if outcomes and isinstance(outcomes[0], dict):
+            ids = [o.get("token_id", "") for o in outcomes if o.get("token_id")]
+            if ids:
+                logger.debug(f"Found token_ids from outcomes: {ids[:2]}")
+                return ids
+
+        logger.warning(f"No token_ids found for market: {market.get('question', 'unknown')[:40]}")
         return []
 
 

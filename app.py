@@ -198,6 +198,7 @@ def run_agent_cycle():
                 token_ids = market.get("token_ids", [])
                 yes_token = token_ids[0] if len(token_ids) > 0 else None
                 no_token = token_ids[1] if len(token_ids) > 1 else None
+                logger.info(f"Token IDs: {token_ids[:2] if token_ids else 'NONE'}")
 
                 decision = {
                     "timestamp": datetime.now().isoformat(),

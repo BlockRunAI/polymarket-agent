@@ -140,7 +140,14 @@ class TradeExecutor:
         Returns:
             Order ID or None if failed
         """
+        logger.info(f"Attempting order: token={token_id[:20]}..., side={side}, amount=${amount_usdc}")
+
+        if not token_id or len(token_id) < 10:
+            logger.error(f"Invalid token_id: {token_id}")
+            return None
+
         if not self._ensure_initialized():
+            logger.error("Failed to initialize CLOB client")
             return None
 
         try:
@@ -155,11 +162,13 @@ class TradeExecutor:
             if price is None:
                 price = self.get_best_price(token_id, side)
                 if price is None:
-                    logger.error("Could not determine price")
+                    logger.error(f"Could not determine price for token {token_id[:20]}...")
                     return None
+                logger.info(f"Best price: {price}")
 
             # Calculate size in shares
             size = amount_usdc / price
+            logger.info(f"Order details: price={price}, size={size:.4f} shares")
 
             order_side = BUY if side.upper() == "BUY" else SELL
 
@@ -171,17 +180,22 @@ class TradeExecutor:
                 "side": order_side,
             }
 
+            logger.info(f"Submitting order to CLOB...")
             signed_order = self.client.create_and_post_order(order_args)
+            logger.info(f"CLOB response: {signed_order}")
 
             if signed_order:
-                order_id = signed_order.get("orderID") or signed_order.get("order_id")
-                logger.info(f"Order placed: {order_id}")
+                order_id = signed_order.get("orderID") or signed_order.get("order_id") or signed_order.get("id")
+                logger.info(f"Order placed successfully: {order_id}")
                 return order_id
 
+            logger.error("CLOB returned empty response")
             return None
 
         except Exception as e:
-            logger.error(f"Order execution failed: {e}")
+            logger.error(f"Order execution failed: {type(e).__name__}: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
             return None
 
     def validate_trade_signal(
