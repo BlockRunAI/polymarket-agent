@@ -185,6 +185,7 @@ class TradeExecutor:
 
         try:
             from py_clob_client.order_builder.constants import BUY, SELL
+            from py_clob_client.clob_types import OrderArgs
 
             # Enforce safety limits
             if amount_usdc > MAX_BET_SIZE:
@@ -205,13 +206,13 @@ class TradeExecutor:
 
             order_side = BUY if side.upper() == "BUY" else SELL
 
-            # Create and sign order
-            order_args = {
-                "token_id": token_id,
-                "price": price,
-                "size": size,
-                "side": order_side,
-            }
+            # Create and sign order using OrderArgs (required by py-clob-client)
+            order_args = OrderArgs(
+                token_id=token_id,
+                price=price,
+                size=size,
+                side=order_side,
+            )
 
             logger.info(f"Submitting order to CLOB...")
             signed_order = self.client.create_and_post_order(order_args)
