@@ -275,9 +275,9 @@ def agent_loop():
     """Background agent loop - continuous market analysis"""
     while state.running:
         run_agent_cycle()
-        # Brief pause to prevent API hammering, then continue immediately
-        logger.info("Cycle complete. Starting next cycle...")
-        time.sleep(2)  # 2 second pause between cycles
+        # Wait 6 hours before next cycle (for continuous demo running)
+        logger.info("Cycle complete. Next cycle in 6 hours...")
+        time.sleep(6 * 60 * 60)  # 6 hours between cycles
 
 
 def start_agent():
