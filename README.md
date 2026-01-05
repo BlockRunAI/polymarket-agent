@@ -355,7 +355,6 @@ We're building the infrastructure for autonomous AI economies. This agent is jus
 | Website | [blockrun.ai](https://blockrun.ai) |
 | GitHub | [@BlockRunAI](https://github.com/BlockRunAI) |
 | X (Twitter) | [@BlockRunAI](https://x.com/BlockRunAI) |
-| Email | [vicky@blockrun.ai](mailto:vicky@blockrun.ai) |
 
 **Resources:**
 - [BlockRun Documentation](https://docs.blockrun.ai)
