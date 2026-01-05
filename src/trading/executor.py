@@ -71,16 +71,24 @@ class TradeExecutor:
                 self._initialized = True
                 return True
             else:
-                # Try to derive credentials (requires wallet registered on Polymarket)
-                logger.info("No stored credentials, attempting to derive API key...")
+                # Try to create/derive credentials programmatically
+                logger.info("No stored credentials, attempting to create API key...")
                 self.client = ClobClient(
                     host=CLOB_HOST,
                     chain_id=CHAIN_ID,
                     key=self.private_key
                 )
                 try:
-                    self._api_creds = self.client.derive_api_key()
-                    logger.info(f"Successfully derived API credentials!")
+                    # Try create_api_key first (creates new credentials)
+                    try:
+                        self._api_creds = self.client.create_api_key()
+                        logger.info("Created new API credentials via create_api_key()")
+                    except Exception:
+                        # Fall back to derive_api_key (for existing accounts)
+                        self._api_creds = self.client.derive_api_key()
+                        logger.info("Derived API credentials via derive_api_key()")
+
+                    logger.info(f"Successfully obtained API credentials!")
                     logger.info(f"Add these to .env to avoid re-deriving:")
                     logger.info(f"POLYMARKET_API_KEY={self._api_creds.api_key}")
                     logger.info(f"POLYMARKET_API_SECRET={self._api_creds.api_secret}")
@@ -95,8 +103,8 @@ class TradeExecutor:
                     )
                     self._initialized = True
                     return True
-                except Exception as derive_err:
-                    logger.error(f"Could not derive API key: {derive_err}")
+                except Exception as auth_err:
+                    logger.error(f"Could not create/derive API key: {auth_err}")
                     logger.error("SOLUTION: Your wallet must be registered with Polymarket first!")
                     logger.error("1. Go to https://polymarket.com")
                     logger.error("2. Connect with the same wallet used for POLYGON_WALLET_PRIVATE_KEY")
