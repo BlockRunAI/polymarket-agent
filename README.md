@@ -119,7 +119,94 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 2. Configure Environment
+### 2. Polymarket Account Setup
+
+**IMPORTANT:** Polymarket uses a **proxy wallet system**. Understanding this is critical for successful trading.
+
+#### How Polymarket Wallets Work
+
+When you sign into Polymarket, a **Gnosis Safe proxy wallet** is automatically deployed for you. This means you have TWO addresses:
+
+| Address Type | Purpose | Example |
+|--------------|---------|---------|
+| **Signer (EOA)** | Your private key wallet - signs transactions | `0x4069...3A7` |
+| **Proxy (Gnosis Safe)** | Holds your funds on Polymarket | `0x84f8...d2b` |
+
+**Why two addresses?**
+- Your private key signs orders
+- Your proxy wallet holds USDC and executes trades
+- This enables "gasless" trading through relayers
+
+#### Step-by-Step Setup
+
+**Step 1: Get Your Proxy Wallet Address**
+
+1. Go to https://polymarket.com
+2. Connect with your wallet (MetaMask, WalletConnect, etc.)
+3. Sign in and accept terms of service
+4. Go to **Settings** → **Wallet**
+5. Copy the address shown - **this is your PROXY wallet** (not your signer wallet!)
+
+**Step 2: Get Your Private Key**
+
+Export your wallet's private key:
+- **MetaMask:** Account Details → Export Private Key
+- **Other wallets:** Follow wallet-specific export instructions
+
+⚠️ **Security:** Never share your private key. It should only be in your `.env` file.
+
+**Step 3: Choose API Credential Strategy**
+
+You have two options:
+
+**Option A: Auto-Derive Credentials (Easier)**
+- Agent will derive credentials automatically on first run
+- No manual setup needed
+- Credentials will be logged for you to save
+
+**Option B: Pre-Generate Credentials (Recommended for Production)**
+- More reliable for repeated deployments
+- Avoids derivation issues
+- See "Generating API Credentials" below
+
+#### Generating API Credentials (Optional but Recommended)
+
+Run this Python script to generate credentials:
+
+```python
+from py_clob_client.client import ClobClient
+
+# Your setup
+PRIVATE_KEY = "0x..."  # Your signer private key
+PROXY_WALLET = "0x..."  # From Polymarket settings
+
+client = ClobClient(
+    "https://clob.polymarket.com",
+    key=PRIVATE_KEY,
+    chain_id=137,
+    signature_type=2,  # Gnosis Safe proxy
+    funder=PROXY_WALLET
+)
+
+creds = client.create_or_derive_api_creds()
+print(f"POLYMARKET_API_KEY={creds['apiKey']}")
+print(f"POLYMARKET_API_SECRET={creds['secret']}")
+print(f"POLYMARKET_PASSPHRASE={creds['passphrase']}")
+```
+
+Save these to your `.env` file.
+
+#### Understanding Signature Types
+
+| Type | Value | Use Case | Your Setup |
+|------|-------|----------|------------|
+| EOA | `0` | Direct wallet (signer = funder) | If NOT using proxy |
+| POLY_PROXY | `1` | Magic Link email wallets | Rare |
+| **GNOSIS_SAFE** | `2` | **Standard Polymarket proxy** | **Most users (YOU!)** |
+
+The agent automatically detects your signature type based on whether signer ≠ funder.
+
+### 3. Configure Environment
 
 ```bash
 cp .env.example .env
@@ -132,7 +219,17 @@ Edit `.env`:
 BLOCKRUN_WALLET_KEY=0x...your_private_key
 
 # Polymarket Trading (Polygon chain)
+# This is your SIGNER wallet private key (the one you exported)
 POLYGON_WALLET_PRIVATE_KEY=0x...your_private_key
+
+# Your PROXY wallet address (from Polymarket settings page)
+POLYMARKET_PROXY_WALLET=0x...your_proxy_address
+
+# Polymarket API Credentials (optional but recommended)
+# If omitted, agent will try to derive them automatically
+POLYMARKET_API_KEY=your_api_key
+POLYMARKET_API_SECRET=your_api_secret
+POLYMARKET_PASSPHRASE=your_passphrase
 
 # Dashboard Auth
 ADMIN_USER=admin
@@ -143,16 +240,20 @@ INITIAL_BANKROLL=100
 MAX_BET_PERCENTAGE=0.05
 ```
 
-> **Pro Tip:** You can use the same private key for both - same address works on Base and Polygon!
+> **Pro Tip:** You can use the same private key for both Base and Polygon - same address works on both chains!
 
-### 3. Fund Your Wallet
+### 4. Fund Your Wallets
 
 | Chain | Token | Purpose | Suggested |
 |-------|-------|---------|-----------|
 | Base | USDC | AI payments | $10-20 |
-| Polygon | USDC | Trading | $50-100 |
+| Polygon | USDC.e | Trading | $50-100 |
 
-### 4. Run
+**CRITICAL:** Fund your **PROXY wallet** (from Step 2), not your signer wallet!
+- On Polymarket, deposit USDC to the address shown in Settings
+- The proxy wallet is where trades execute from
+
+### 5. Run
 
 ```bash
 # Start web dashboard
@@ -357,6 +458,113 @@ Deploy to **Tokyo (`asia-northeast1`)** for reliable order execution:
 ```bash
 ./deploy-tokyo.sh
 ```
+
+---
+
+## Troubleshooting
+
+### Common Errors and Solutions
+
+#### ❌ Error: `PolyApiException: invalid signature` (400)
+
+**Cause:** Incorrect signature type for your wallet setup.
+
+**Solution:**
+1. Verify you're using a proxy wallet: Check if `POLYMARKET_PROXY_WALLET` is set and different from your signer address
+2. The agent should auto-detect `signature_type=2` (Gnosis Safe) when proxy ≠ signer
+3. If still failing, your API credentials may be wrong - delete them from `.env` and let the agent re-derive them
+
+**Check your setup:**
+```python
+# Your addresses should be DIFFERENT:
+Signer:  0x4069...  (POLYGON_WALLET_PRIVATE_KEY)
+Proxy:   0x84f8...  (POLYMARKET_PROXY_WALLET)
+```
+
+#### ❌ Error: `403 Forbidden` on order placement
+
+**Cause:** Deployed to a geoblocked region.
+
+**Solution:** Deploy to Tokyo (`asia-northeast1`) instead:
+```bash
+./deploy-tokyo.sh
+```
+
+See [Deployment Requirements](#deployment-requirements) for allowed regions.
+
+#### ❌ Error: No markets found / Markets filtered out
+
+**Cause:** Markets have extreme odds (99/1) or low liquidity.
+
+**Solution:** The agent filters for tradeable markets (15%-85% odds, $5K+ liquidity). This is intentional to avoid markets with no edge potential. If you want different thresholds, edit `src/market/polymarket.py`:
+
+```python
+markets = fetch_active_markets(
+    limit=50,
+    min_odds=0.10,      # Adjust minimum (default 0.15)
+    max_odds=0.90,      # Adjust maximum (default 0.85)
+    min_liquidity=1000  # Adjust min liquidity (default 5000)
+)
+```
+
+#### ❌ Error: Could not derive API credentials
+
+**Cause:** Wallet not registered with Polymarket.
+
+**Solution:**
+1. Go to https://polymarket.com
+2. Connect with the wallet for `POLYGON_WALLET_PRIVATE_KEY`
+3. Sign in and accept terms of service
+4. Wait for proxy wallet to deploy (~1 minute)
+5. Get your proxy address from Settings → Wallet
+6. Retry agent initialization
+
+#### ❌ Dashboard shows "Agent not configured"
+
+**Cause:** Missing or invalid environment variables.
+
+**Solution:** Check `.env` has all required fields:
+```bash
+BLOCKRUN_WALLET_KEY=0x...
+POLYGON_WALLET_PRIVATE_KEY=0x...
+POLYMARKET_PROXY_WALLET=0x...
+```
+
+Verify wallets are funded:
+- Base USDC for AI payments
+- Polygon USDC in proxy wallet for trading
+
+#### ❌ Orders fail with "insufficient balance"
+
+**Cause:** USDC not in your proxy wallet.
+
+**Solution:**
+1. Check balance at https://polymarket.com (should show in Settings)
+2. Deposit USDC to your **PROXY wallet** address (not signer!)
+3. On Polymarket, the deposit address is your proxy wallet
+
+#### ❌ Trades execute but dashboard doesn't update
+
+**Cause:** Dashboard polling interval or caching.
+
+**Solution:** Refresh the browser. Dashboard polls every 5 seconds - changes may take a few moments to appear.
+
+### Getting Help
+
+If you're still stuck:
+
+1. **Check logs:**
+   - Local: Terminal output shows detailed errors
+   - Cloud Run: `gcloud run services logs read polymarket-agent --region asia-northeast1`
+
+2. **Common issues:**
+   - Private key format: Must start with `0x`
+   - Proxy wallet: Must be different from signer
+   - API creds: If in doubt, delete from `.env` and let agent re-derive
+
+3. **Still broken?**
+   - [Open an issue](https://github.com/BlockRunAI/polymarket-agent/issues)
+   - Include error message and relevant logs (redact private keys!)
 
 ---
 
