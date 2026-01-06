@@ -70,8 +70,9 @@ class TradeExecutor:
                     api_secret=api_secret,
                     api_passphrase=passphrase
                 )
-                # Determine signature type: 1 for proxy wallet, 0 for direct EOA
-                sig_type = 1 if self.wallet_address != self.signer_address else 0
+                # Determine signature type based on wallet setup
+                # 0 = EOA (signer = funder), 2 = Gnosis Safe proxy (most common)
+                sig_type = 2 if self.wallet_address != self.signer_address else 0
                 logger.info(f"Using signature_type={sig_type} (proxy={self.wallet_address != self.signer_address})")
                 self.client = ClobClient(
                     host=CLOB_HOST,
@@ -87,8 +88,9 @@ class TradeExecutor:
             else:
                 # Try to create/derive credentials programmatically
                 logger.info("No stored credentials, attempting to create/derive API key...")
-                # Determine signature type: 1 for proxy wallet, 0 for direct EOA
-                sig_type = 1 if self.wallet_address != self.signer_address else 0
+                # Determine signature type based on wallet setup
+                # 0 = EOA (signer = funder), 2 = Gnosis Safe proxy (most common)
+                sig_type = 2 if self.wallet_address != self.signer_address else 0
                 logger.info(f"Using signature_type={sig_type} (proxy={self.wallet_address != self.signer_address})")
                 self.client = ClobClient(
                     host=CLOB_HOST,
