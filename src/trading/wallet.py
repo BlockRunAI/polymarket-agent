@@ -12,8 +12,8 @@ from eth_account import Account
 load_dotenv()
 
 # Contract addresses
-# Native USDC on Polygon (used by Polymarket)
-USDC_CONTRACT = "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
+# USDC.e (bridged) on Polygon - used for balance display
+USDC_CONTRACT = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"
 POLYMARKET_EXCHANGE = "0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E"
 RPC_URL = "https://polygon-rpc.com"
 
