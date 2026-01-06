@@ -72,35 +72,30 @@ class TradeExecutor:
                 return True
             else:
                 # Try to create/derive credentials programmatically
-                logger.info("No stored credentials, attempting to create API key...")
+                logger.info("No stored credentials, attempting to create/derive API key...")
                 self.client = ClobClient(
                     host=CLOB_HOST,
                     chain_id=CHAIN_ID,
                     key=self.private_key
                 )
                 try:
-                    # Try create_api_key first (creates new credentials)
-                    try:
-                        self._api_creds = self.client.create_api_key()
-                        logger.info("Created new API credentials via create_api_key()")
-                    except Exception:
-                        # Fall back to derive_api_key (for existing accounts)
-                        self._api_creds = self.client.derive_api_key()
-                        logger.info("Derived API credentials via derive_api_key()")
+                    # Use the recommended create_or_derive_api_creds method
+                    self._api_creds = self.client.create_or_derive_api_creds()
+                    logger.info("Obtained API credentials via create_or_derive_api_creds()")
+
+                    # Log credentials for user to save
+                    api_key = self._api_creds.get("apiKey") or getattr(self._api_creds, "api_key", None)
+                    api_secret = self._api_creds.get("secret") or getattr(self._api_creds, "api_secret", None)
+                    passphrase = self._api_creds.get("passphrase") or getattr(self._api_creds, "api_passphrase", None)
 
                     logger.info(f"Successfully obtained API credentials!")
                     logger.info(f"Add these to .env to avoid re-deriving:")
-                    logger.info(f"POLYMARKET_API_KEY={self._api_creds.api_key}")
-                    logger.info(f"POLYMARKET_API_SECRET={self._api_creds.api_secret}")
-                    logger.info(f"POLYMARKET_PASSPHRASE={self._api_creds.api_passphrase}")
+                    logger.info(f"POLYMARKET_API_KEY={api_key}")
+                    logger.info(f"POLYMARKET_API_SECRET={api_secret}")
+                    logger.info(f"POLYMARKET_PASSPHRASE={passphrase}")
 
-                    # Re-create client with credentials
-                    self.client = ClobClient(
-                        host=CLOB_HOST,
-                        chain_id=CHAIN_ID,
-                        key=self.private_key,
-                        creds=self._api_creds
-                    )
+                    # Set credentials on the client
+                    self.client.set_api_creds(self._api_creds)
                     self._initialized = True
                     return True
                 except Exception as auth_err:
