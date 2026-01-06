@@ -36,6 +36,10 @@ class TradeExecutor:
         if not self.private_key.startswith("0x"):
             self.private_key = "0x" + self.private_key
 
+        # Get wallet address from private key
+        from eth_account import Account
+        self.wallet_address = Account.from_key(self.private_key).address
+
         self.client = None
         self._api_creds = None
         self._initialized = False
@@ -66,9 +70,12 @@ class TradeExecutor:
                     host=CLOB_HOST,
                     chain_id=CHAIN_ID,
                     key=self.private_key,
-                    creds=self._api_creds
+                    creds=self._api_creds,
+                    signature_type=0,  # EOA wallet
+                    funder=self.wallet_address
                 )
                 self._initialized = True
+                logger.info(f"CLOB client initialized for wallet {self.wallet_address[:10]}...")
                 return True
             else:
                 # Try to create/derive credentials programmatically
@@ -76,7 +83,9 @@ class TradeExecutor:
                 self.client = ClobClient(
                     host=CLOB_HOST,
                     chain_id=CHAIN_ID,
-                    key=self.private_key
+                    key=self.private_key,
+                    signature_type=0,  # EOA wallet
+                    funder=self.wallet_address
                 )
                 try:
                     # Use the recommended create_or_derive_api_creds method
@@ -97,6 +106,7 @@ class TradeExecutor:
                     # Set credentials on the client
                     self.client.set_api_creds(self._api_creds)
                     self._initialized = True
+                    logger.info(f"CLOB client initialized for wallet {self.wallet_address[:10]}...")
                     return True
                 except Exception as auth_err:
                     logger.error(f"Could not create/derive API key: {auth_err}")
@@ -180,7 +190,7 @@ class TradeExecutor:
 
         try:
             from py_clob_client.order_builder.constants import BUY, SELL
-            from py_clob_client.clob_types import OrderArgs
+            from py_clob_client.clob_types import OrderArgs, OrderType
 
             # Enforce safety limits
             if amount_usdc > MAX_BET_SIZE:
@@ -210,7 +220,16 @@ class TradeExecutor:
             )
 
             logger.info(f"Submitting order to CLOB...")
-            signed_order = self.client.create_and_post_order(order_args)
+            # Use GTC (Good-Til-Cancelled) order type with default tick_size
+            # Most Polymarket markets use 0.01 tick_size and are not neg_risk
+            signed_order = self.client.create_and_post_order(
+                order_args,
+                options={
+                    "tick_size": "0.01",
+                    "neg_risk": False,
+                },
+                order_type=OrderType.GTC
+            )
             logger.info(f"CLOB response: {signed_order}")
 
             if signed_order:
