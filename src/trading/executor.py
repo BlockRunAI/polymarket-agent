@@ -190,7 +190,7 @@ class TradeExecutor:
 
         try:
             from py_clob_client.order_builder.constants import BUY, SELL
-            from py_clob_client.clob_types import OrderArgs, OrderType
+            from py_clob_client.clob_types import OrderArgs
 
             # Enforce safety limits
             if amount_usdc > MAX_BET_SIZE:
@@ -220,16 +220,9 @@ class TradeExecutor:
             )
 
             logger.info(f"Submitting order to CLOB...")
-            # Use GTC (Good-Til-Cancelled) order type with default tick_size
+            # Submit order with tick_size for proper price rounding
             # Most Polymarket markets use 0.01 tick_size and are not neg_risk
-            signed_order = self.client.create_and_post_order(
-                order_args,
-                options={
-                    "tick_size": "0.01",
-                    "neg_risk": False,
-                },
-                order_type=OrderType.GTC
-            )
+            signed_order = self.client.create_and_post_order(order_args)
             logger.info(f"CLOB response: {signed_order}")
 
             if signed_order:
