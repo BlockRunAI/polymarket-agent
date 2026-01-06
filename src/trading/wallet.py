@@ -68,9 +68,12 @@ class PolygonWallet:
         if not self.private_key.startswith("0x"):
             self.private_key = "0x" + self.private_key
 
-        # Get wallet address
+        # Get signer address (EOA that signs transactions)
         self.account = Account.from_key(self.private_key)
-        self.address = self.account.address
+        self.signer_address = self.account.address
+
+        # Use proxy wallet for balance display if set, otherwise use signer
+        self.address = os.getenv("POLYMARKET_PROXY_WALLET", self.signer_address)
 
         # Initialize Web3
         self.w3 = Web3(Web3.HTTPProvider(RPC_URL))
@@ -138,15 +141,15 @@ class PolygonWallet:
             gas_price = self.w3.eth.gas_price
             gas_price = int(gas_price * 1.2)  # 20% buffer
 
-            # Build transaction
+            # Build transaction (use signer address for transactions)
             txn = self.usdc.functions.approve(
                 POLYMARKET_EXCHANGE,
                 approve_amount
             ).build_transaction({
-                'from': self.address,
+                'from': self.signer_address,
                 'gas': 100000,
                 'gasPrice': gas_price,
-                'nonce': self.w3.eth.get_transaction_count(self.address),
+                'nonce': self.w3.eth.get_transaction_count(self.signer_address),
             })
 
             # Sign and send
