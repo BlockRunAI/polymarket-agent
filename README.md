@@ -332,6 +332,34 @@ polymarket-agent/
 
 ---
 
+## Deployment Requirements
+
+### Geographic Restrictions (Important!)
+
+Polymarket's CLOB API enforces geographic restrictions via Cloudflare. **Order placement (`POST /order`) will fail with `403 Forbidden`** if deployed to blocked regions.
+
+| Region | Status | Notes |
+|--------|--------|-------|
+| **United States** | Blocked | CFTC settlement (2022) |
+| **European Union** | Blocked | Belgium, France, Poland specifically |
+| **United Kingdom** | Blocked | No UKGC approval |
+| **Singapore** | Blocked | Remote gambling laws |
+| **Australia** | Blocked | Remote gambling laws |
+| **Japan (Tokyo)** | Allowed | Recommended deployment region |
+| **Taiwan** | Allowed | Alternative option |
+
+**Note:** `GET` requests (market data, orderbook) work from any region. Only `POST` requests (order placement) are blocked.
+
+### Recommended Deployment
+
+Deploy to **Tokyo (`asia-northeast1`)** for reliable order execution:
+
+```bash
+./deploy-tokyo.sh
+```
+
+---
+
 ## Join the Movement
 
 We're building the infrastructure for autonomous AI economies. This agent is just the beginning.

@@ -1,15 +1,18 @@
 #!/bin/bash
 set -e
 
-# Deploy Polymarket Agent to GCP Cloud Run (Europe)
-# Usage: ./deploy-europe.sh
+# Deploy Polymarket Agent to GCP Cloud Run (Tokyo)
+# Usage: ./deploy-tokyo.sh
+#
+# NOTE: Polymarket CLOB API geoblocks US, EU, UK, Singapore, Australia.
+# Tokyo (asia-northeast1) is a non-blocked region for order placement.
 
 PROJECT_ID="avian-voice-476622-r8"
-REGION="europe-west1"
+REGION="asia-northeast1"
 SERVICE_NAME="polymarket-agent"
 
 echo "=========================================="
-echo "Deploying Polymarket Agent to Europe"
+echo "Deploying Polymarket Agent to Tokyo"
 echo "Region: $REGION"
 echo "=========================================="
 
