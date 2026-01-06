@@ -58,6 +58,12 @@ else
     echo "Warning: No POLYMARKET_API_KEY set. Agent will try to derive credentials at runtime."
 fi
 
+# Add Polymarket proxy wallet if set (funder address for trades)
+if [ -n "$POLYMARKET_PROXY_WALLET" ]; then
+    echo "Using Polymarket proxy wallet: $POLYMARKET_PROXY_WALLET"
+    ENV_VARS="$ENV_VARS,POLYMARKET_PROXY_WALLET=$POLYMARKET_PROXY_WALLET"
+fi
+
 gcloud run deploy $SERVICE_NAME \
     --source . \
     --region $REGION \

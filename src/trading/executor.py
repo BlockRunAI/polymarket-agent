@@ -36,9 +36,13 @@ class TradeExecutor:
         if not self.private_key.startswith("0x"):
             self.private_key = "0x" + self.private_key
 
-        # Get wallet address from private key
+        # Get wallet address from private key (EOA that signs)
         from eth_account import Account
-        self.wallet_address = Account.from_key(self.private_key).address
+        self.signer_address = Account.from_key(self.private_key).address
+
+        # Polymarket proxy wallet (where funds are held and trades execute)
+        # This is the funder address on Polymarket
+        self.wallet_address = os.getenv("POLYMARKET_PROXY_WALLET", self.signer_address)
 
         self.client = None
         self._api_creds = None
