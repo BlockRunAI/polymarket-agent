@@ -178,22 +178,31 @@ class PolymarketClient:
         return []
 
 
-def fetch_active_markets(limit: int = 50) -> List[Dict[str, Any]]:
+def fetch_active_markets(
+    limit: int = 50,
+    min_odds: float = 0.15,
+    max_odds: float = 0.85,
+    min_liquidity: float = 5000.0
+) -> List[Dict[str, Any]]:
     """
-    Convenience function to fetch active markets
+    Convenience function to fetch active markets with edge potential
 
     Args:
         limit: Maximum number of markets
+        min_odds: Minimum YES odds (default 15% - filters out <15% markets)
+        max_odds: Maximum YES odds (default 85% - filters out >85% markets)
+        min_liquidity: Minimum liquidity in USD (default $5,000)
 
     Returns:
-        List of formatted market data
+        List of formatted market data with trading opportunity potential
     """
     import logging
+    import json
     logger = logging.getLogger(__name__)
 
     client = PolymarketClient()
-    # Fetch more to filter out expired ones
-    markets = client.fetch_markets(limit=limit * 5)
+    # Fetch more to filter out expired and extreme-odds markets
+    markets = client.fetch_markets(limit=limit * 10)
 
     if not markets:
         logger.warning("Polymarket API returned no markets")
@@ -225,11 +234,41 @@ def fetch_active_markets(limit: int = 50) -> List[Dict[str, Any]]:
 
     logger.info(f"After date filter: {len(future_markets)} future markets")
 
+    # Filter by odds range (exclude extreme markets like 99/1)
+    tradeable_markets = []
+    for m in future_markets:
+        # Parse YES odds from outcomePrices
+        outcome_prices = m.get("outcomePrices", "[]")
+        try:
+            if isinstance(outcome_prices, str):
+                prices = json.loads(outcome_prices)
+            else:
+                prices = outcome_prices
+            if len(prices) >= 1:
+                yes_odds = float(prices[0]) if prices[0] else 0.5
+            else:
+                yes_odds = 0.5  # Default to 50% if unknown
+        except:
+            yes_odds = 0.5
+
+        # Check liquidity
+        liquidity = float(m.get('liquidity', 0) or 0)
+
+        # Filter: odds must be in tradeable range AND have sufficient liquidity
+        if min_odds <= yes_odds <= max_odds and liquidity >= min_liquidity:
+            tradeable_markets.append(m)
+        else:
+            logger.debug(f"Filtered out: {m.get('question', '')[:50]}... "
+                        f"(odds={yes_odds:.0%}, liq=${liquidity:,.0f})")
+
+    logger.info(f"After odds/liquidity filter: {len(tradeable_markets)} tradeable markets "
+                f"(odds {min_odds:.0%}-{max_odds:.0%}, min liq ${min_liquidity:,.0f})")
+
     # Sort by volume (highest first) for more interesting markets
-    future_markets.sort(key=lambda x: float(x.get('volume', 0) or 0), reverse=True)
+    tradeable_markets.sort(key=lambda x: float(x.get('volume', 0) or 0), reverse=True)
 
     # Return only the requested limit
-    return [client.format_market(m) for m in future_markets[:limit]]
+    return [client.format_market(m) for m in tradeable_markets[:limit]]
 
 
 def print_markets(markets: List[Dict[str, Any]]) -> None:
