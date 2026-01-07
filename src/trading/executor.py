@@ -564,8 +564,11 @@ class TradeExecutor:
         Returns:
             Trade result or None
         """
+        logger.info(f"🎯 execute_signal called: action={action}, conf={confidence}, consensus={consensus}, bankroll=${bankroll:.2f}")
+
         # Validate signal
         should_trade, reason = self.validate_trade_signal(action, edge, confidence, consensus)
+        logger.info(f"🎯 Validation result: should_trade={should_trade}, reason={reason}")
 
         if not should_trade:
             logger.info(f"Skipping trade: {reason}")
@@ -573,11 +576,12 @@ class TradeExecutor:
 
         # Calculate position size
         size = self.calculate_position_size(edge, confidence, bankroll)
+        logger.info(f"🎯 Calculated position size: ${size:.2f}")
 
         # Determine side
         side = "BUY"  # We always buy (YES or NO tokens)
 
-        logger.info(f"Executing: {action} ${size:.2f} (edge: {edge*100:.1f}%, conf: {confidence}/10)")
+        logger.info(f"🎯 Executing: {action} ${size:.2f} (edge: {edge*100:.1f}%, conf: {confidence}/10)")
 
         # Place order
         order_id = self.place_market_order(token_id, side, size)
