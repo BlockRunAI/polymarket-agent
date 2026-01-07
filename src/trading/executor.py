@@ -185,11 +185,26 @@ class TradeExecutor:
         try:
             # Fetch open orders from Polymarket CLOB
             logger.info("🔍 Fetching orders from Polymarket CLOB...")
+            logger.info(f"🔍 Wallet address: {self.wallet_address}")
+
+            # Try different methods to get orders
             orders = self.client.get_orders()
-            logger.info(f"🔍 Raw orders response: {type(orders)} with {len(orders) if orders else 0} items")
+            logger.info(f"🔍 get_orders() returned: {type(orders)} with {len(orders) if orders else 0} items")
+
+            # Also try to get order book trades
+            if hasattr(self.client, 'get_order_books'):
+                logger.info("🔍 Trying get_order_books()...")
+
+            # Log first order for debugging
+            if orders and len(orders) > 0:
+                logger.info(f"🔍 First order sample: {orders[0]}")
+            else:
+                logger.info("ℹ️  No orders returned from API - this could mean:")
+                logger.info("   1. All orders already filled/cancelled")
+                logger.info("   2. Orders are still pending but not visible yet")
+                logger.info("   3. API credentials issue (check POLYMARKET_API_KEY)")
 
             if not orders:
-                logger.info("ℹ️  No orders returned from API")
                 return []
 
             # Format orders for display

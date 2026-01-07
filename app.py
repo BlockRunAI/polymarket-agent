@@ -115,6 +115,32 @@ class AgentState:
         self.trades = []
         self.error = None
         self.auto_trade = False  # Auto-trading disabled by default
+        self._load_persistent_trades()
+
+    def _load_persistent_trades(self):
+        """Load persisted trades from disk to survive restarts"""
+        import os
+        import json
+        state_file = '/tmp/polymarket_agent_trades.json'
+        try:
+            if os.path.exists(state_file):
+                with open(state_file, 'r') as f:
+                    data = json.load(f)
+                    self.trades = data.get('trades', [])
+                    logger.info(f"📂 Loaded {len(self.trades)} persisted trades from disk")
+        except Exception as e:
+            logger.error(f"Failed to load persistent trades: {e}")
+
+    def save_persistent_trades(self):
+        """Save trades to disk"""
+        import json
+        state_file = '/tmp/polymarket_agent_trades.json'
+        try:
+            with open(state_file, 'w') as f:
+                json.dump({'trades': self.trades}, f)
+            logger.info(f"📂 Saved {len(self.trades)} trades to disk")
+        except Exception as e:
+            logger.error(f"Failed to save persistent trades: {e}")
 
 state = AgentState()
 
@@ -252,6 +278,8 @@ def run_agent_cycle():
                                     "status": trade_result.get("status", "submitted"),
                                     "message": trade_result.get("message", "")
                                 })
+                                # Persist to disk so it survives restarts
+                                state.save_persistent_trades()
                             else:
                                 logger.info(f"Trade skipped: {trade_result.get('reason', 'unknown')}")
                         else:
@@ -535,6 +563,31 @@ def api_positions():
         import traceback
         logger.error(traceback.format_exc())
         return jsonify({"error": str(e), "open_orders": [], "positions": [], "session_orders": []}), 500
+
+
+@app.route('/api/add_order', methods=['POST'])
+def api_add_order():
+    """Manually add an order to track (for orders placed before persistence was added)"""
+    try:
+        data = request.json
+        order = {
+            "timestamp": data.get("timestamp", datetime.now().isoformat()),
+            "market": data.get("market", "Unknown"),
+            "action": data.get("action", "Unknown"),
+            "size": float(data.get("size", 0)),
+            "order_id": data.get("order_id"),
+            "status": data.get("status", "submitted"),
+            "message": data.get("message", "Manually added order")
+        }
+
+        state.trades.append(order)
+        state.save_persistent_trades()
+
+        logger.info(f"📝 Manually added order: {order['order_id'][:20]}... for {order['market']}")
+        return jsonify({"status": "success", "order": order})
+    except Exception as e:
+        logger.error(f"Failed to add order: {e}")
+        return jsonify({"status": "error", "error": str(e)}), 400
 
 
 @app.route('/api/logs')
