@@ -365,7 +365,7 @@ class TradeExecutor:
         Returns:
             Order ID or None if failed
         """
-        logger.info(f"Attempting order: token={token_id[:20]}..., side={side}, amount=${amount_usdc}")
+        logger.info(f"📝 Attempting order: token={token_id[:20]}..., side={side}, amount=${amount_usdc}")
 
         # Validation checks
         if not token_id or len(token_id) < 10:
@@ -378,10 +378,16 @@ class TradeExecutor:
             logger.error("   Amount must be greater than 0")
             return None
 
-        if not self._ensure_initialized():
+        logger.info(f"🔄 Checking CLOB client initialization...")
+        init_result = self._ensure_initialized()
+        logger.info(f"🔄 CLOB client init result: {init_result}")
+
+        if not init_result:
             logger.error("❌ Failed to initialize CLOB client")
             logger.error("   Check your wallet configuration and API credentials")
             logger.error("   POLYGON_WALLET_PRIVATE_KEY must be set in .env")
+            logger.error(f"   Initialized flag: {self._initialized}")
+            logger.error(f"   Client exists: {self.client is not None}")
             return None
 
         try:
