@@ -238,14 +238,19 @@ def run_agent_cycle():
 
                             decision["trade_result"] = trade_result
 
-                            if trade_result.get("status") == "success":
-                                logger.info(f"TRADE EXECUTED: {action} ${trade_result.get('size', 0):.2f}")
+                            if trade_result.get("status") in ["success", "submitted"]:
+                                status_msg = "SUBMITTED" if trade_result.get("status") == "submitted" else "EXECUTED"
+                                logger.info(f"TRADE {status_msg}: {action} ${trade_result.get('size', 0):.2f}")
+                                logger.info(f"  Order ID: {trade_result.get('order_id', 'Unknown')}")
+                                logger.info(f"  ⚠️  Check Polymarket.com to see if order fills")
                                 state.trades.append({
                                     "timestamp": datetime.now().isoformat(),
                                     "market": question[:40],
                                     "action": action,
                                     "size": trade_result.get("size", 0),
                                     "order_id": trade_result.get("order_id"),
+                                    "status": trade_result.get("status", "submitted"),
+                                    "message": trade_result.get("message", "")
                                 })
                             else:
                                 logger.info(f"Trade skipped: {trade_result.get('reason', 'unknown')}")

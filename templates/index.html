@@ -1667,18 +1667,35 @@
                 // Show session trades (for context)
                 if (sessionTrades.length > 0) {
                     html += '<div style="padding: 12px 20px; background: rgba(0, 240, 255, 0.1); border-bottom: 1px solid var(--border-subtle); margin-top: 16px;"><strong style="color: var(--accent-cyan);">Recent Session Activity</strong></div>';
-                    sessionTrades.slice().reverse().slice(0, 5).forEach(t => {
-                        const statusClass = t.status === 'success' ? 'success' : (t.status === 'skipped' ? 'skipped' : 'error');
+                    sessionTrades.slice().reverse().slice(0, 10).forEach(t => {
+                        // Map status to appropriate class and display
+                        let statusClass, statusDisplay;
+                        if (t.status === 'submitted') {
+                            statusClass = 'pending';
+                            statusDisplay = 'SUBMITTED';
+                        } else if (t.status === 'success') {
+                            statusClass = 'success';
+                            statusDisplay = 'FILLED';
+                        } else if (t.status === 'skipped') {
+                            statusClass = 'skipped';
+                            statusDisplay = 'SKIPPED';
+                        } else {
+                            statusClass = 'error';
+                            statusDisplay = 'FAILED';
+                        }
+
                         html += `
                         <div class="decision-item">
                             <div class="decision-header">
                                 <span class="decision-market">${t.market || 'Unknown'}</span>
-                                <span class="trade-result ${statusClass}">${t.status?.toUpperCase() || 'PENDING'}</span>
+                                <span class="trade-result ${statusClass}">${statusDisplay}</span>
                             </div>
                             <div class="decision-metrics">
                                 <div class="metric"><span class="metric-value neutral">${t.action || 'N/A'}</span><span class="metric-label">Action</span></div>
                                 <div class="metric"><span class="metric-value positive">$${(t.size || 0).toFixed(2)}</span><span class="metric-label">Size</span></div>
                             </div>
+                            ${t.order_id ? `<div class="decision-reasoning" style="font-family: 'JetBrains Mono', monospace; font-size: 11px;">Order: ${t.order_id.slice(0, 30)}...</div>` : ''}
+                            ${t.message ? `<div class="decision-reasoning">${t.message}</div>` : ''}
                             <div class="decision-time">${t.timestamp ? new Date(t.timestamp).toLocaleString() : 'N/A'}</div>
                         </div>`;
                     });

@@ -423,7 +423,15 @@ class TradeExecutor:
 
             if signed_order:
                 order_id = signed_order.get("orderID") or signed_order.get("order_id") or signed_order.get("id")
-                logger.info(f"Order placed successfully: {order_id}")
+                status = signed_order.get("status", "UNKNOWN")
+
+                logger.info(f"✓ Order submitted to CLOB: {order_id}")
+                logger.info(f"  Initial status: {status}")
+                logger.info(f"  Token: {token_id[:30]}...")
+                logger.info(f"  Price: {price:.3f} | Size: {size:.2f} shares | Value: ${amount_usdc:.2f}")
+                logger.info(f"  ⚠️  Note: Order is now in orderbook waiting to fill")
+                logger.info(f"  Check https://polymarket.com for order status")
+
                 return order_id
 
             logger.error("CLOB returned empty response")
@@ -570,17 +578,18 @@ class TradeExecutor:
 
         if order_id:
             return {
-                "status": "success",
+                "status": "submitted",  # Changed from "success" to be more accurate
                 "order_id": order_id,
                 "action": action,
                 "size": size,
                 "edge": edge,
-                "confidence": confidence
+                "confidence": confidence,
+                "message": "Order submitted to orderbook (waiting to fill)"
             }
         else:
             return {
                 "status": "failed",
-                "reason": "Order placement failed"
+                "reason": "Order placement failed - check logs for details"
             }
 
 
