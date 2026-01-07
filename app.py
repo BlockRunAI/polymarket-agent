@@ -498,21 +498,43 @@ def api_positions():
         return jsonify({"error": "Executor not configured"}), 503
 
     try:
-        # Get open orders (pending bids)
+        # Get open orders from Polymarket API
+        logger.info("📊 Fetching positions from Polymarket...")
         open_orders = executor.get_open_orders()
+        logger.info(f"📊 Found {len(open_orders)} open orders from API")
 
         # Get filled positions
         positions = executor.get_positions()
+        logger.info(f"📊 Found {len(positions)} filled positions from API")
+
+        # Also include recently submitted orders from this session
+        session_orders = []
+        for trade in state.trades:
+            if trade.get("status") == "submitted" and trade.get("order_id"):
+                session_orders.append({
+                    "order_id": trade["order_id"],
+                    "market": trade.get("market", "Unknown"),
+                    "action": trade.get("action", "Unknown"),
+                    "size": trade.get("size", 0),
+                    "timestamp": trade.get("timestamp"),
+                    "source": "session"  # Mark as from current session
+                })
+
+        logger.info(f"📊 Found {len(session_orders)} submitted orders from session")
 
         return jsonify({
             "open_orders": open_orders,
             "positions": positions,
+            "session_orders": session_orders,  # Add session-tracked orders
             "total_orders": len(open_orders),
-            "total_positions": len(positions)
+            "total_positions": len(positions),
+            "total_session_orders": len(session_orders)
         })
     except Exception as e:
-        logger.error(f"Failed to fetch positions: {e}")
-        return jsonify({"error": str(e), "open_orders": [], "positions": []}), 500
+        logger.error(f"❌ Failed to fetch positions: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return jsonify({"error": str(e), "open_orders": [], "positions": [], "session_orders": []}), 500
 
 
 @app.route('/api/logs')

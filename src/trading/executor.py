@@ -184,9 +184,12 @@ class TradeExecutor:
 
         try:
             # Fetch open orders from Polymarket CLOB
+            logger.info("🔍 Fetching orders from Polymarket CLOB...")
             orders = self.client.get_orders()
+            logger.info(f"🔍 Raw orders response: {type(orders)} with {len(orders) if orders else 0} items")
 
             if not orders:
+                logger.info("ℹ️  No orders returned from API")
                 return []
 
             # Format orders for display
@@ -228,9 +231,11 @@ class TradeExecutor:
             return formatted_orders
 
         except Exception as e:
-            logger.error(f"Failed to fetch open orders: {e}")
+            logger.error(f"❌ Failed to fetch open orders: {e}")
             import traceback
             logger.error(traceback.format_exc())
+            logger.error(f"   Client type: {type(self.client)}")
+            logger.error(f"   Has get_orders: {hasattr(self.client, 'get_orders')}")
             return []
 
     def get_positions(self) -> list[Dict[str, Any]]:

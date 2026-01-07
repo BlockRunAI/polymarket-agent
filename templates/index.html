@@ -1619,13 +1619,34 @@
                 const sessionTrades = tradesData.trades || [];
                 const openOrders = positionsData.open_orders || [];
                 const positions = positionsData.positions || [];
+                const sessionOrders = positionsData.session_orders || [];
 
                 // Combine all data for display
                 let html = '';
 
-                // Show open orders first
+                // Show session orders first (these we know we submitted)
+                if (sessionOrders.length > 0) {
+                    html += '<div style="padding: 12px 20px; background: rgba(255, 200, 0, 0.15); border-bottom: 1px solid var(--border-subtle);"><strong style="color: #FFC800;">⏳ Recently Submitted Orders (This Session)</strong></div>';
+                    sessionOrders.forEach(order => {
+                        html += `
+                        <div class="decision-item">
+                            <div class="decision-header">
+                                <span class="decision-market">${order.market || 'Unknown Market'}</span>
+                                <span class="trade-result pending">SUBMITTED</span>
+                            </div>
+                            <div class="decision-metrics">
+                                <div class="metric"><span class="metric-value neutral">${order.action}</span><span class="metric-label">Action</span></div>
+                                <div class="metric"><span class="metric-value positive">$${order.size.toFixed(2)}</span><span class="metric-label">Size</span></div>
+                            </div>
+                            <div class="decision-reasoning" style="font-family: 'JetBrains Mono', monospace; font-size: 11px;">Order: ${order.order_id.slice(0, 40)}...</div>
+                            <div class="decision-time">${order.timestamp ? new Date(order.timestamp).toLocaleString() : 'N/A'}</div>
+                        </div>`;
+                    });
+                }
+
+                // Show open orders from API
                 if (openOrders.length > 0) {
-                    html += '<div style="padding: 12px 20px; background: rgba(255, 136, 0, 0.1); border-bottom: 1px solid var(--border-subtle);"><strong style="color: var(--accent-orange);">Open Orders (Pending Bids)</strong></div>';
+                    html += '<div style="padding: 12px 20px; background: rgba(255, 136, 0, 0.1); border-bottom: 1px solid var(--border-subtle); margin-top: 16px;"><strong style="color: var(--accent-orange);">Open Orders from Polymarket API</strong></div>';
                     openOrders.forEach(order => {
                         html += `
                         <div class="decision-item">
