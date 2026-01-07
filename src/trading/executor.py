@@ -171,6 +171,181 @@ class TradeExecutor:
 
         return None
 
+    def get_open_orders(self) -> list[Dict[str, Any]]:
+        """
+        Get all open orders for this wallet
+
+        Returns:
+            List of open orders with their details
+        """
+        if not self._ensure_initialized():
+            logger.error("Cannot fetch orders - client not initialized")
+            return []
+
+        try:
+            # Fetch open orders from Polymarket CLOB
+            orders = self.client.get_orders()
+
+            if not orders:
+                return []
+
+            # Format orders for display
+            formatted_orders = []
+            for order in orders:
+                try:
+                    # Handle both dict and object formats
+                    if isinstance(order, dict):
+                        order_id = order.get('id') or order.get('orderID')
+                        market = order.get('market', 'Unknown')
+                        asset_id = order.get('asset_id') or order.get('tokenID')
+                        price = float(order.get('price', 0))
+                        size = float(order.get('size', 0))
+                        side = order.get('side', 'BUY')
+                        status = order.get('status', 'OPEN')
+                    else:
+                        order_id = getattr(order, 'id', None) or getattr(order, 'orderID', None)
+                        market = getattr(order, 'market', 'Unknown')
+                        asset_id = getattr(order, 'asset_id', None) or getattr(order, 'tokenID', None)
+                        price = float(getattr(order, 'price', 0))
+                        size = float(getattr(order, 'size', 0))
+                        side = getattr(order, 'side', 'BUY')
+                        status = getattr(order, 'status', 'OPEN')
+
+                    formatted_orders.append({
+                        'order_id': order_id,
+                        'market': market,
+                        'asset_id': asset_id,
+                        'price': price,
+                        'size': size,
+                        'side': side,
+                        'value': price * size,
+                        'status': status
+                    })
+                except Exception as e:
+                    logger.error(f"Error formatting order: {e}")
+                    continue
+
+            return formatted_orders
+
+        except Exception as e:
+            logger.error(f"Failed to fetch open orders: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return []
+
+    def get_positions(self) -> list[Dict[str, Any]]:
+        """
+        Get current positions (filled orders / holdings)
+
+        Returns:
+            List of positions with market info
+        """
+        if not self._ensure_initialized():
+            logger.error("Cannot fetch positions - client not initialized")
+            return []
+
+        try:
+            # Try to get positions from balance endpoint
+            # This requires the client to support balance queries
+            balances = []
+            try:
+                # Some versions of py-clob-client have get_balances
+                if hasattr(self.client, 'get_balances'):
+                    balances = self.client.get_balances()
+            except:
+                pass
+
+            if not balances:
+                # Fallback: get filled orders
+                logger.info("Fetching filled orders as positions...")
+                try:
+                    # Get all orders and filter for filled/matched
+                    all_orders = self.client.get_orders()
+                    filled_orders = [
+                        o for o in all_orders
+                        if (getattr(o, 'status', None) or o.get('status') if isinstance(o, dict) else None)
+                        in ['MATCHED', 'FILLED']
+                    ]
+
+                    # Group by token to create positions
+                    positions_map = {}
+                    for order in filled_orders:
+                        try:
+                            if isinstance(order, dict):
+                                asset_id = order.get('asset_id') or order.get('tokenID')
+                                size = float(order.get('size', 0))
+                                price = float(order.get('price', 0))
+                                side = order.get('side', 'BUY')
+                            else:
+                                asset_id = getattr(order, 'asset_id', None) or getattr(order, 'tokenID', None)
+                                size = float(getattr(order, 'size', 0))
+                                price = float(getattr(order, 'price', 0))
+                                side = getattr(order, 'side', 'BUY')
+
+                            if asset_id not in positions_map:
+                                positions_map[asset_id] = {
+                                    'asset_id': asset_id,
+                                    'total_size': 0,
+                                    'avg_price': 0,
+                                    'total_cost': 0
+                                }
+
+                            # Add to position (buy adds, sell subtracts)
+                            if side == 'BUY':
+                                positions_map[asset_id]['total_size'] += size
+                                positions_map[asset_id]['total_cost'] += size * price
+                            else:
+                                positions_map[asset_id]['total_size'] -= size
+                                positions_map[asset_id]['total_cost'] -= size * price
+                        except:
+                            continue
+
+                    # Calculate avg prices and format
+                    balances = []
+                    for asset_id, pos in positions_map.items():
+                        if pos['total_size'] > 0.001:  # Only include non-zero positions
+                            balances.append({
+                                'asset_id': asset_id,
+                                'balance': pos['total_size'],
+                                'avg_price': pos['total_cost'] / pos['total_size'] if pos['total_size'] > 0 else 0
+                            })
+
+                except Exception as e:
+                    logger.error(f"Error getting filled orders: {e}")
+
+            # Format positions for display
+            formatted_positions = []
+            for bal in balances:
+                try:
+                    if isinstance(bal, dict):
+                        asset_id = bal.get('asset_id') or bal.get('tokenID')
+                        balance = float(bal.get('balance', 0))
+                        avg_price = float(bal.get('avg_price', 0))
+                    else:
+                        asset_id = getattr(bal, 'asset_id', None) or getattr(bal, 'tokenID', None)
+                        balance = float(getattr(bal, 'balance', 0))
+                        avg_price = float(getattr(bal, 'avg_price', 0))
+
+                    if balance > 0.001:  # Only show non-zero positions
+                        formatted_positions.append({
+                            'asset_id': asset_id,
+                            'size': balance,
+                            'avg_price': avg_price,
+                            'value': balance * avg_price,
+                            'market': 'Unknown'  # Would need market lookup
+                        })
+                except Exception as e:
+                    logger.error(f"Error formatting position: {e}")
+                    continue
+
+            return formatted_positions
+
+        except Exception as e:
+            logger.error(f"Failed to fetch positions: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return []
+
     def place_market_order(
         self,
         token_id: str,
@@ -192,12 +367,21 @@ class TradeExecutor:
         """
         logger.info(f"Attempting order: token={token_id[:20]}..., side={side}, amount=${amount_usdc}")
 
+        # Validation checks
         if not token_id or len(token_id) < 10:
-            logger.error(f"Invalid token_id: {token_id}")
+            logger.error(f"❌ Invalid token_id: {token_id}")
+            logger.error("   Token ID must be a valid Polymarket outcome token")
+            return None
+
+        if amount_usdc <= 0:
+            logger.error(f"❌ Invalid amount: ${amount_usdc}")
+            logger.error("   Amount must be greater than 0")
             return None
 
         if not self._ensure_initialized():
-            logger.error("Failed to initialize CLOB client")
+            logger.error("❌ Failed to initialize CLOB client")
+            logger.error("   Check your wallet configuration and API credentials")
+            logger.error("   POLYGON_WALLET_PRIVATE_KEY must be set in .env")
             return None
 
         try:
@@ -246,9 +430,42 @@ class TradeExecutor:
             return None
 
         except Exception as e:
-            logger.error(f"Order execution failed: {type(e).__name__}: {e}")
+            error_msg = str(e)
+            logger.error(f"Order execution failed: {type(e).__name__}: {error_msg}")
             import traceback
             logger.error(traceback.format_exc())
+
+            # Provide helpful error messages
+            if "unauthorized" in error_msg.lower() or "401" in error_msg:
+                logger.error("❌ AUTHENTICATION ERROR:")
+                logger.error("   Your API credentials are invalid or expired.")
+                logger.error("   SOLUTION:")
+                logger.error("   1. Go to https://polymarket.com and sign in with your wallet")
+                logger.error("   2. Re-run the agent to regenerate API credentials")
+                logger.error(f"   3. Or manually set POLYMARKET_API_KEY in .env")
+            elif "insufficient" in error_msg.lower() or "balance" in error_msg.lower():
+                logger.error("❌ INSUFFICIENT BALANCE:")
+                logger.error(f"   Your wallet needs more USDC to place this order")
+                logger.error(f"   SOLUTION: Add USDC to {self.wallet_address[:10]}...")
+            elif "token" in error_msg.lower() and "not found" in error_msg.lower():
+                logger.error("❌ INVALID TOKEN:")
+                logger.error(f"   Token ID may be incorrect or market is closed")
+                logger.error(f"   Token: {token_id[:30]}...")
+            elif "price" in error_msg.lower():
+                logger.error("❌ PRICE ERROR:")
+                logger.error(f"   The order price may be out of bounds")
+                logger.error(f"   Attempted price: {price if price else 'N/A'}")
+            elif "signature" in error_msg.lower():
+                logger.error("❌ SIGNATURE ERROR:")
+                logger.error(f"   Signature type mismatch (proxy wallet issue)")
+                logger.error(f"   Current setup: signature_type={2 if self.wallet_address != self.signer_address else 0}")
+                logger.error(f"   Signer: {self.signer_address[:10]}...")
+                logger.error(f"   Funder: {self.wallet_address[:10]}...")
+            else:
+                logger.error("❌ ORDER FAILED:")
+                logger.error(f"   Error: {error_msg[:200]}")
+                logger.error("   Check logs above for details")
+
             return None
 
     def validate_trade_signal(

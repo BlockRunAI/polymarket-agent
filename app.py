@@ -486,6 +486,30 @@ def api_trades():
     return jsonify({"trades": state.trades[-20:]})
 
 
+@app.route('/api/positions')
+def api_positions():
+    """Get current open positions and orders from Polymarket"""
+    if not executor:
+        return jsonify({"error": "Executor not configured"}), 503
+
+    try:
+        # Get open orders (pending bids)
+        open_orders = executor.get_open_orders()
+
+        # Get filled positions
+        positions = executor.get_positions()
+
+        return jsonify({
+            "open_orders": open_orders,
+            "positions": positions,
+            "total_orders": len(open_orders),
+            "total_positions": len(positions)
+        })
+    except Exception as e:
+        logger.error(f"Failed to fetch positions: {e}")
+        return jsonify({"error": str(e), "open_orders": [], "positions": []}), 500
+
+
 @app.route('/api/logs')
 def api_logs():
     """Get recent logs"""

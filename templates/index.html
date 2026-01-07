@@ -1244,13 +1244,14 @@
                 <div class="card-header">
                     <div class="card-title">
                         <div class="card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
-                        Executed Trades
+                        Positions & Orders
                     </div>
+                    <button class="btn btn-ghost" onclick="refreshPositions()">Refresh</button>
                 </div>
                 <div id="trades-list" class="decision-list">
                     <div class="empty-state">
                         <div class="empty-state-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M15 9.5a3 3 0 0 0-3-3h-1a3 3 0 0 0 0 6h2a3 3 0 0 1 0 6h-1a3 3 0 0 1-3-3"/></svg></div>
-                        <div>No trades executed yet.</div>
+                        <div>Loading positions...</div>
                     </div>
                 </div>
             </div>
@@ -1605,31 +1606,97 @@
 
         async function fetchTrades() {
             try {
-                const res = await fetch('/api/agent/trades');
-                const data = await res.json();
+                // Fetch both session trades and actual Polymarket positions
+                const [tradesRes, positionsRes] = await Promise.all([
+                    fetch('/api/agent/trades'),
+                    fetch('/api/positions')
+                ]);
+
+                const tradesData = await tradesRes.json();
+                const positionsData = await positionsRes.json();
                 const container = document.getElementById('trades-list');
 
-                if (!data.trades || data.trades.length === 0) {
-                    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💰</div><div>No trades executed yet.</div></div>';
-                    return;
+                const sessionTrades = tradesData.trades || [];
+                const openOrders = positionsData.open_orders || [];
+                const positions = positionsData.positions || [];
+
+                // Combine all data for display
+                let html = '';
+
+                // Show open orders first
+                if (openOrders.length > 0) {
+                    html += '<div style="padding: 12px 20px; background: rgba(255, 136, 0, 0.1); border-bottom: 1px solid var(--border-subtle);"><strong style="color: var(--accent-orange);">Open Orders (Pending Bids)</strong></div>';
+                    openOrders.forEach(order => {
+                        html += `
+                        <div class="decision-item">
+                            <div class="decision-header">
+                                <span class="decision-market">${order.market || 'Unknown Market'}</span>
+                                <span class="trade-result pending">OPEN</span>
+                            </div>
+                            <div class="decision-metrics">
+                                <div class="metric"><span class="metric-value neutral">${order.side}</span><span class="metric-label">Side</span></div>
+                                <div class="metric"><span class="metric-value">${order.price.toFixed(2)}</span><span class="metric-label">Price</span></div>
+                                <div class="metric"><span class="metric-value">${order.size.toFixed(2)}</span><span class="metric-label">Size</span></div>
+                                <div class="metric"><span class="metric-value positive">$${order.value.toFixed(2)}</span><span class="metric-label">Value</span></div>
+                            </div>
+                            <div class="decision-time">Order ID: ${order.order_id?.slice(0, 20) || 'N/A'}...</div>
+                        </div>`;
+                    });
                 }
 
-                container.innerHTML = data.trades.slice().reverse().slice(0, 15).map(t => {
-                    const statusClass = t.status === 'success' ? 'success' : (t.status === 'skipped' ? 'skipped' : 'error');
-                    return `
-                    <div class="decision-item">
-                        <div class="decision-header">
-                            <span class="decision-market">${t.market || 'Unknown'}</span>
-                            <span class="trade-result ${statusClass}">${t.status?.toUpperCase() || 'PENDING'}</span>
-                        </div>
-                        <div class="decision-metrics">
-                            <div class="metric"><span class="metric-value neutral">${t.action || 'N/A'}</span><span class="metric-label">Action</span></div>
-                            <div class="metric"><span class="metric-value positive">$${(t.size || 0).toFixed(2)}</span><span class="metric-label">Size</span></div>
-                        </div>
-                        <div class="decision-time">${t.timestamp ? new Date(t.timestamp).toLocaleString() : 'N/A'}</div>
-                    </div>`;
-                }).join('');
-            } catch (e) { console.error(e); }
+                // Show filled positions
+                if (positions.length > 0) {
+                    html += '<div style="padding: 12px 20px; background: rgba(0, 255, 136, 0.1); border-bottom: 1px solid var(--border-subtle); margin-top: 16px;"><strong style="color: var(--accent-green);">Filled Positions</strong></div>';
+                    positions.forEach(pos => {
+                        html += `
+                        <div class="decision-item">
+                            <div class="decision-header">
+                                <span class="decision-market">${pos.market || 'Unknown Market'}</span>
+                                <span class="trade-result success">FILLED</span>
+                            </div>
+                            <div class="decision-metrics">
+                                <div class="metric"><span class="metric-value neutral">${pos.size.toFixed(2)}</span><span class="metric-label">Shares</span></div>
+                                <div class="metric"><span class="metric-value">${pos.avg_price.toFixed(3)}</span><span class="metric-label">Avg Price</span></div>
+                                <div class="metric"><span class="metric-value positive">$${pos.value.toFixed(2)}</span><span class="metric-label">Cost Basis</span></div>
+                            </div>
+                            <div class="decision-time">Asset: ${pos.asset_id?.slice(0, 20) || 'N/A'}...</div>
+                        </div>`;
+                    });
+                }
+
+                // Show session trades (for context)
+                if (sessionTrades.length > 0) {
+                    html += '<div style="padding: 12px 20px; background: rgba(0, 240, 255, 0.1); border-bottom: 1px solid var(--border-subtle); margin-top: 16px;"><strong style="color: var(--accent-cyan);">Recent Session Activity</strong></div>';
+                    sessionTrades.slice().reverse().slice(0, 5).forEach(t => {
+                        const statusClass = t.status === 'success' ? 'success' : (t.status === 'skipped' ? 'skipped' : 'error');
+                        html += `
+                        <div class="decision-item">
+                            <div class="decision-header">
+                                <span class="decision-market">${t.market || 'Unknown'}</span>
+                                <span class="trade-result ${statusClass}">${t.status?.toUpperCase() || 'PENDING'}</span>
+                            </div>
+                            <div class="decision-metrics">
+                                <div class="metric"><span class="metric-value neutral">${t.action || 'N/A'}</span><span class="metric-label">Action</span></div>
+                                <div class="metric"><span class="metric-value positive">$${(t.size || 0).toFixed(2)}</span><span class="metric-label">Size</span></div>
+                            </div>
+                            <div class="decision-time">${t.timestamp ? new Date(t.timestamp).toLocaleString() : 'N/A'}</div>
+                        </div>`;
+                    });
+                }
+
+                if (html === '') {
+                    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💰</div><div>No positions or orders found.</div></div>';
+                } else {
+                    container.innerHTML = html;
+                }
+            } catch (e) {
+                console.error('Error fetching trades/positions:', e);
+                document.getElementById('trades-list').innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><div>Error loading positions. Check console.</div></div>';
+            }
+        }
+
+        async function refreshPositions() {
+            fetchTrades();
         }
 
         async function fetchLogs() {
