@@ -115,32 +115,132 @@ class AgentState:
         self.trades = []
         self.error = None
         self.auto_trade = False  # Auto-trading disabled by default
-        self._load_persistent_trades()
+        self._load_persistent_data()
 
-    def _load_persistent_trades(self):
-        """Load persisted trades from disk to survive restarts"""
+    def _load_persistent_data(self):
+        """
+        Load persisted data from Google Cloud Storage (if enabled)
+        Falls back to local /tmp storage if GCS is disabled
+        """
+        try:
+            from src.storage import get_storage
+            storage = get_storage()
+
+            # If GCS is disabled, use local /tmp storage
+            if storage is None:
+                logger.info("📂 Using local /tmp storage (USE_GCS_STORAGE=false)")
+                self._load_from_tmp()
+                return
+
+            # Load from GCS
+            self.trades = storage.load_orders()
+            logger.info(f"📦 Loaded {len(self.trades)} orders from GCS")
+
+            self.decisions = storage.load_decisions()
+            logger.info(f"🧠 Loaded {len(self.decisions)} decisions from GCS")
+
+        except Exception as e:
+            logger.error(f"Failed to load from GCS: {e}")
+            logger.warning("Continuing with empty state")
+            self.trades = []
+            self.decisions = []
+
+    def _load_from_tmp(self):
+        """Load data from local /tmp directory (fallback when GCS disabled)"""
         import os
         import json
-        state_file = '/tmp/polymarket_agent_trades.json'
-        try:
-            if os.path.exists(state_file):
-                with open(state_file, 'r') as f:
-                    data = json.load(f)
-                    self.trades = data.get('trades', [])
-                    logger.info(f"📂 Loaded {len(self.trades)} persisted trades from disk")
-        except Exception as e:
-            logger.error(f"Failed to load persistent trades: {e}")
 
-    def save_persistent_trades(self):
-        """Save trades to disk"""
-        import json
-        state_file = '/tmp/polymarket_agent_trades.json'
+        tmp_orders = "/tmp/polymarket_orders.json"
+        tmp_decisions = "/tmp/polymarket_decisions.json"
+
+        # Load orders
         try:
-            with open(state_file, 'w') as f:
-                json.dump({'trades': self.trades}, f)
-            logger.info(f"📂 Saved {len(self.trades)} trades to disk")
+            if os.path.exists(tmp_orders):
+                with open(tmp_orders, 'r') as f:
+                    data = json.load(f)
+                    self.trades = data.get('orders', [])
+                    logger.info(f"📦 Loaded {len(self.trades)} orders from /tmp")
+            else:
+                self.trades = []
         except Exception as e:
-            logger.error(f"Failed to save persistent trades: {e}")
+            logger.error(f"Failed to load orders from /tmp: {e}")
+            self.trades = []
+
+        # Load decisions
+        try:
+            if os.path.exists(tmp_decisions):
+                with open(tmp_decisions, 'r') as f:
+                    data = json.load(f)
+                    self.decisions = data.get('decisions', [])
+                    logger.info(f"🧠 Loaded {len(self.decisions)} decisions from /tmp")
+            else:
+                self.decisions = []
+        except Exception as e:
+            logger.error(f"Failed to load decisions from /tmp: {e}")
+            self.decisions = []
+
+    def save_persistent_data(self):
+        """
+        Save all data to Google Cloud Storage (if enabled)
+        Falls back to local /tmp storage if GCS is disabled
+        """
+        try:
+            from src.storage import get_storage
+            storage = get_storage()
+
+            # If GCS is disabled, use local /tmp storage
+            if storage is None:
+                self._save_to_tmp()
+                return
+
+            # Save to GCS
+            storage.save_orders(self.trades)
+            storage.save_decisions(self.decisions)
+
+            logger.info(f"💾 Saved {len(self.trades)} orders and {len(self.decisions)} decisions to GCS")
+
+        except Exception as e:
+            logger.error(f"Failed to save to GCS: {e}")
+
+    def _save_to_tmp(self):
+        """Save data to local /tmp directory (fallback when GCS disabled)"""
+        import os
+        import json
+        from datetime import datetime
+
+        tmp_orders = "/tmp/polymarket_orders.json"
+        tmp_decisions = "/tmp/polymarket_decisions.json"
+
+        # Save orders
+        try:
+            orders_data = {
+                'orders': self.trades,
+                'updated_at': datetime.now().isoformat(),
+                'total_orders': len(self.trades)
+            }
+            with open(tmp_orders, 'w') as f:
+                json.dump(orders_data, f, indent=2)
+        except Exception as e:
+            logger.error(f"Failed to save orders to /tmp: {e}")
+
+        # Save decisions
+        try:
+            decisions_data = {
+                'decisions': self.decisions,
+                'updated_at': datetime.now().isoformat(),
+                'total_decisions': len(self.decisions)
+            }
+            with open(tmp_decisions, 'w') as f:
+                json.dump(decisions_data, f, indent=2)
+        except Exception as e:
+            logger.error(f"Failed to save decisions to /tmp: {e}")
+
+        logger.info(f"💾 Saved {len(self.trades)} orders and {len(self.decisions)} decisions to /tmp")
+
+    # Backward compatibility aliases
+    def save_persistent_trades(self):
+        """Alias for backward compatibility"""
+        self.save_persistent_data()
 
 state = AgentState()
 
@@ -290,6 +390,28 @@ def run_agent_cycle():
 
                 state.decisions.append(decision)
 
+                # Also save market analysis for future assessment
+                market_record = {
+                    "timestamp": datetime.now().isoformat(),
+                    "question": question,
+                    "market_id": market_id,
+                    "yes_odds": yes_odds,
+                    "volume": float(market.get("volume", 0) or 0),
+                    "liquidity": float(market.get("liquidity", 0) or 0),
+                    "ai_analysis": analysis,
+                    "decision": action,
+                    "edge": edge
+                }
+
+                # Save market analysis to GCS for assessment (if GCS enabled)
+                try:
+                    from src.storage import get_storage
+                    storage = get_storage()
+                    if storage is not None:  # Only save to GCS if enabled
+                        storage.add_market_analysis(market_record)
+                except Exception as e:
+                    logger.debug(f"Failed to save market analysis: {e}")
+
                 # Keep only last 30
                 if len(state.decisions) > 30:
                     state.decisions = state.decisions[-30:]
@@ -298,6 +420,12 @@ def run_agent_cycle():
 
             except Exception as e:
                 logger.error(f"Analysis error: {e}")
+
+        # Save decisions to GCS at end of cycle
+        try:
+            state.save_persistent_data()
+        except Exception as e:
+            logger.error(f"Failed to save cycle data to GCS: {e}")
 
     except Exception as e:
         state.error = str(e)
@@ -521,48 +649,56 @@ def api_trades():
 
 @app.route('/api/positions')
 def api_positions():
-    """Get current open positions and orders from Polymarket"""
+    """
+    Get comprehensive trading data:
+    1. Open orders from Polymarket CLOB (live orderbook)
+    2. Filled positions from Polymarket (actual holdings)
+    3. Order history from persistent storage (all sessions)
+    """
     if not executor:
         return jsonify({"error": "Executor not configured"}), 503
 
     try:
-        # Get open orders from Polymarket API
-        logger.info("📊 Fetching positions from Polymarket...")
+        # Fetch live data from Polymarket API
+        logger.info("📊 Fetching live data from Polymarket CLOB...")
         open_orders = executor.get_open_orders()
-        logger.info(f"📊 Found {len(open_orders)} open orders from API")
-
-        # Get filled positions
         positions = executor.get_positions()
-        logger.info(f"📊 Found {len(positions)} filled positions from API")
+        logger.info(f"   Live orders: {len(open_orders)}, Positions: {len(positions)}")
 
-        # Also include recently submitted orders from this session
-        session_orders = []
+        # Get tracked order history from persistent storage (all sessions)
+        order_history = []
         for trade in state.trades:
-            if trade.get("status") == "submitted" and trade.get("order_id"):
-                session_orders.append({
+            if trade.get("order_id"):  # Any order we've tracked
+                order_history.append({
                     "order_id": trade["order_id"],
                     "market": trade.get("market", "Unknown"),
                     "action": trade.get("action", "Unknown"),
                     "size": trade.get("size", 0),
+                    "status": trade.get("status", "unknown"),
                     "timestamp": trade.get("timestamp"),
-                    "source": "session"  # Mark as from current session
+                    "message": trade.get("message", "")
                 })
 
-        logger.info(f"📊 Found {len(session_orders)} submitted orders from session")
+        logger.info(f"   Order history: {len(order_history)} tracked orders")
 
         return jsonify({
-            "open_orders": open_orders,
-            "positions": positions,
-            "session_orders": session_orders,  # Add session-tracked orders
+            "open_orders": open_orders,          # Live from Polymarket
+            "positions": positions,               # Live from Polymarket
+            "order_history": order_history,       # From persistent storage
             "total_orders": len(open_orders),
             "total_positions": len(positions),
-            "total_session_orders": len(session_orders)
+            "total_tracked": len(order_history)
         })
     except Exception as e:
         logger.error(f"❌ Failed to fetch positions: {e}")
         import traceback
         logger.error(traceback.format_exc())
-        return jsonify({"error": str(e), "open_orders": [], "positions": [], "session_orders": []}), 500
+        return jsonify({
+            "error": str(e),
+            "open_orders": [],
+            "positions": [],
+            "order_history": []
+        }), 500
 
 
 @app.route('/api/add_order', methods=['POST'])

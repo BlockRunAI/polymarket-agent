@@ -67,6 +67,17 @@ if [ -n "$POLYMARKET_PROXY_WALLET" ]; then
     ENV_VARS="$ENV_VARS,POLYMARKET_PROXY_WALLET=$POLYMARKET_PROXY_WALLET"
 fi
 
+# Add Google Cloud Storage settings (optional)
+if [ -n "$USE_GCS_STORAGE" ]; then
+    echo "GCS Storage: $USE_GCS_STORAGE"
+    ENV_VARS="$ENV_VARS,USE_GCS_STORAGE=$USE_GCS_STORAGE"
+fi
+
+if [ -n "$GCS_BUCKET_NAME" ]; then
+    echo "GCS Bucket: $GCS_BUCKET_NAME"
+    ENV_VARS="$ENV_VARS,GCS_BUCKET_NAME=$GCS_BUCKET_NAME"
+fi
+
 gcloud run deploy $SERVICE_NAME \
     --source . \
     --region $REGION \
