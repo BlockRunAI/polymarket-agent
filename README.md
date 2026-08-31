@@ -44,7 +44,7 @@ Traditional approaches fail because:
 - Prepaid credits = budget controlled by humans
 - Single provider = no choice, no optimization
 
-The x402 protocol solves this by making payments as simple as HTTP requests. BlockRun brings this to AI - <!-- br:models.chatVisible -->71<!-- /br:models.chatVisible --> models, pay-per-request, no keys needed.
+The x402 protocol solves this by making payments as simple as HTTP requests. BlockRun brings this to AI - <!-- br:models.chatVisible -->76<!-- /br:models.chatVisible --> models, pay-per-request, no keys needed.
 
 **This agent is our proof that autonomous AI economies are possible today.**
 
@@ -951,7 +951,7 @@ We're building the infrastructure for autonomous AI economies. This agent is jus
 
 ## About BlockRun.AI
 
-[BlockRun](https://blockrun.ai) is the gateway to AI services using x402 micropayments. Access <!-- br:models.chatVisible -->71<!-- /br:models.chatVisible --> AI models with just a wallet - no API keys needed.
+[BlockRun](https://blockrun.ai) is the gateway to AI services using x402 micropayments. Access <!-- br:models.chatVisible -->76<!-- /br:models.chatVisible --> AI models with just a wallet - no API keys needed.
 
 **Connect with us:**
 
