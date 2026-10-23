@@ -47,9 +47,18 @@ echo "Deploying to Cloud Run..."
 # Build env vars string
 ENV_VARS="BLOCKRUN_WALLET_KEY=$BLOCKRUN_WALLET_KEY"
 ENV_VARS="$ENV_VARS,POLYGON_WALLET_PRIVATE_KEY=$POLYGON_WALLET_PRIVATE_KEY"
-ENV_VARS="$ENV_VARS,FLASK_SECRET_KEY=${FLASK_SECRET_KEY:-polymarket-agent-secret}"
+if [ -z "$FLASK_SECRET_KEY" ]; then
+    FLASK_SECRET_KEY=$(openssl rand -hex 32)
+    echo "FLASK_SECRET_KEY not set, generated one for this deploy."
+fi
+if [ -z "$ADMIN_PASS" ]; then
+    ADMIN_PASS=$(openssl rand -hex 12)
+    echo "ADMIN_PASS not set, generated dashboard password: $ADMIN_PASS"
+    echo "Save it now. Set ADMIN_PASS in .env to choose your own."
+fi
+ENV_VARS="$ENV_VARS,FLASK_SECRET_KEY=$FLASK_SECRET_KEY"
 ENV_VARS="$ENV_VARS,ADMIN_USER=${ADMIN_USER:-admin}"
-ENV_VARS="$ENV_VARS,ADMIN_PASS=${ADMIN_PASS:-polymarket2024}"
+ENV_VARS="$ENV_VARS,ADMIN_PASS=$ADMIN_PASS"
 
 # Add Polymarket API credentials if available (recommended for production)
 if [ -n "$POLYMARKET_API_KEY" ]; then
