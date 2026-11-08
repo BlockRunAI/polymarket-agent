@@ -10,6 +10,8 @@ import os
 import logging
 import threading
 import time
+import hmac
+import secrets
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -47,15 +49,27 @@ logger.addHandler(log_buffer)
 
 # Initialize Flask app
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv("FLASK_SECRET_KEY", "default-dev-key")
+app.config['SECRET_KEY'] = os.getenv("FLASK_SECRET_KEY") or secrets.token_hex(32)
 
-# Basic Auth
+# Basic Auth. No hardcoded fallback password: anyone can read this repo, so a
+# default here is a public credential for every deployment that forgets to set
+# one. When ADMIN_PASS is unset, generate a random one for this run and print
+# it once in the startup log so the operator can still log in locally.
 ADMIN_USER = os.getenv("ADMIN_USER", "admin")
-ADMIN_PASS = os.getenv("ADMIN_PASS", "polymarket2024")
+ADMIN_PASS = os.getenv("ADMIN_PASS")
+if not ADMIN_PASS:
+    ADMIN_PASS = secrets.token_urlsafe(18)
+    logger.warning(
+        "ADMIN_PASS is not set. Generated a random dashboard password for "
+        f"this run: {ADMIN_PASS} (set ADMIN_PASS in .env to choose your own)"
+    )
 
 
 def check_auth(username, password):
-    return username == ADMIN_USER and password == ADMIN_PASS
+    return (
+        hmac.compare_digest(username or "", ADMIN_USER)
+        and hmac.compare_digest(password or "", ADMIN_PASS)
+    )
 
 
 def authenticate():
@@ -560,6 +574,7 @@ def api_status():
 
 
 @app.route('/api/analyze')
+@requires_auth
 def api_analyze():
     """API endpoint to run AI analysis"""
     if not analyzer:
@@ -702,6 +717,7 @@ def api_positions():
 
 
 @app.route('/api/add_order', methods=['POST'])
+@requires_auth
 def api_add_order():
     """Manually add an order to track (for orders placed before persistence was added)"""
     try:
